@@ -79,19 +79,20 @@
 </div>
 
 <script>
-  // Check if there's already a session
-  if (localStorage.getItem('currentSpotcheckSession')) {
-    if (!confirm("Ada sesi aktif. Teruskan akan timpa sesi lama. Terus?")) {
-      window.location.href = 'dashboard.html';
-      return;
-    }
-  }
-
-  // Listen for form submit
   document.getElementById('startForm').addEventListener('submit', function(e) {
     e.preventDefault(); // Stop normal form submit
 
-    // Debug: Show this alert to confirm button is clicked and code runs
+    // Now check for existing session HERE (when button is clicked)
+    if (localStorage.getItem('currentSpotcheckSession')) {
+      if (!confirm("Ada sesi aktif. Teruskan akan timpa sesi lama. Terus?")) {
+        // User said NO → go to dashboard instead of creating new
+        window.location.href = 'dashboard.html';
+        return;
+      }
+      // User said YES → continue to create/overwrite
+    }
+
+    // Debug alert to confirm code runs (remove later if you want)
     alert("Form dihantar! Sedang cipta sesi...");
 
     const data = {
@@ -103,13 +104,11 @@
       status: 'draft'
     };
 
-    // Save to localStorage
     localStorage.setItem('currentSpotcheckSession', JSON.stringify(data));
 
-    // Debug: Confirm save worked
+    // Debug alert
     alert("Sesi dicipta! Redirect ke dashboard...");
 
-    // Redirect
     window.location.href = 'dashboard.html';
   });
 </script>
