@@ -1,0 +1,139 @@
+
+
+<!DOCTYPE html>
+
+<html lang="ms">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>Semakan Akhir Sesi Spotcheck</title>
+
+  <style>
+
+    body { font-family: Arial, sans-serif; margin: 15px; background: #f0f2f5; }
+
+    .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+    h1 { text-align: center; color: #d32f2f; }
+
+    .section { margin: 20px 0; padding: 15px; background: #fff8e1; border-radius: 8px; }
+
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+
+    th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+
+    th { background: #1a3c6d; color: white; }
+
+    .btn { display: block; width: 100%; padding: 15px; margin: 10px 0; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; }
+
+    .finalize { background: #d32f2f; color: white; }
+
+    .back { background: #6c757d; color: white; }
+
+  </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>Semakan Akhir Sesi</h1>
+
+  <div id="summary"></div>
+
+  <button class="btn back" onclick="window.location.href='dashboard.html'">Kembali Edit</button>
+
+  <button class="btn finalize" onclick="finalizeSession()">Finalkan Sesi & Simpan</button>
+
+</div>
+
+<script>
+
+  const session = JSON.parse(localStorage.getItem('currentSpotcheckSession'));
+
+  if (!session) {
+
+    document.getElementById('summary').innerHTML = '<p>Tiada sesi ditemui.</p>';
+
+    return;
+
+  }
+
+  let totalStudents = 0;
+
+  let html = `
+
+    <div class="section">
+
+      <strong>Sesi:</strong> ${session.nama}<br>
+
+      <strong>Semester:</strong> ${session.semester} • ${session.tahun}<br>
+
+      <strong>Status:</strong> ${session.status}
+
+    </div>
+
+  `;
+
+  session.kelasList?.forEach(kelas => {
+
+    let batchCount = 0;
+
+    let studentCount = 0;
+
+    (kelas.batches || []).forEach(b => {
+
+      batchCount++;
+
+      studentCount += b.students.length;
+
+      totalStudents += b.students.length;
+
+    });
+
+    html += `
+
+      <div class="section">
+
+        <strong>Kelas:</strong> ${kelas.code}<br>
+
+        <strong>Kategori:</strong> ${batchCount}<br>
+
+        <strong>Jumlah Pelajar:</strong> ${studentCount}
+
+      </div>
+
+    `;
+
+  });
+
+  html += `<h3>JUMLAH KESELURUHAN: ${totalStudents} pelajar</h3>`;
+
+  document.getElementById('summary').innerHTML = html;
+
+  function finalizeSession() {
+
+    if (confirm("Anda pasti ingin finalkan sesi ini? Tidak boleh diubah lagi.")) {
+
+      session.status = 'finalized';
+
+      localStorage.setItem('currentSpotcheckSession', JSON.stringify(session));
+
+      alert("Sesi telah difinalkan!\n\n(Simulasi: data disimpan ke pangkalan data)");
+
+      // In real version → send to server + clear local or archive
+
+    }
+
+  }
+
+</script>
+
+</body>
+
+</html>
