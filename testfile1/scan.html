@@ -131,19 +131,24 @@
   const retryBtn = document.getElementById('retryBtn');
   const headerEl = document.getElementById('header');
 
-  // Load session
-  const session = JSON.parse(localStorage.getItem('currentSpotcheckSession'));
+  // Load session  // Load session
+  let session = JSON.parse(localStorage.getItem('currentSpotcheckSession')) || null;
   const kelasIndex = localStorage.getItem('currentKelasIndex');
 
   if (!session || kelasIndex === null || !session.kelasList?.[kelasIndex]) {
-    headerEl.innerHTML = 'Sesi atau kelas tidak ditemui.';
-    statusEl.style.display = 'none';
-    retryBtn.style.display = 'none';
-    return;
+    headerEl.innerHTML = 'Demo Mode: Tiada sesi/kelas dipilih<br><small style="color:#666;">(data tidak akan disimpan ke sesi)</small>';
+    // Do NOT return → allow scanning for demo
+    // Disable save button
+    const saveBtn = document.querySelector('button[onclick="addToSession()"]');
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Demo: Tidak boleh simpan';
+      saveBtn.style.background = '#6c757d';
+    }
+  } else {
+    const currentKelas = session.kelasList[kelasIndex];
+    headerEl.innerHTML = `Sesi: ${session.nama || 'Spotcheck'}<br>Kelas: ${currentKelas.code || '?'}`;
   }
-
-  const currentKelas = session.kelasList[kelasIndex];
-  headerEl.innerHTML = `Sesi: ${session.nama || 'Spotcheck'}<br>Kelas: ${currentKelas.code || '?'}`;
 
   document.getElementById('startBtn').onclick = startScanner;
   updateStatus("Sila tekan 'Mulakan Imbas QR' untuk mulakan pengimbasan", 'ready');
