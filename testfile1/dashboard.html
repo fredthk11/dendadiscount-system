@@ -70,6 +70,8 @@
 
     <button class="btn-success" onclick="goToReview()">Semak & Finalkan Sesi</button>
 
+    <button class="btn-warning" onclick="resetSession()">Reset Sesi (untuk test)</button>
+
   </div>
 
 </div>
@@ -151,6 +153,14 @@
   }
 
   renderDashboard();
+
+  function resetSession() {
+    if (confirm("Ini akan hapus SEMUA data sesi semasa. Terus?")) {
+      localStorage.removeItem('currentSpotcheckSession');
+      localStorage.removeItem('currentKelasIndex');
+      location.reload();
+    }
+  }
 
 </script>
 
