@@ -1,0 +1,69 @@
+
+
+<!DOCTYPE html>
+
+<html lang="ms">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>Tambah Kelas</title>
+
+  <style>
+
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f0f2f5; }
+
+    .container { max-width: 420px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+
+    h1 { text-align: center; color: #1a3c6d; }
+
+    input { width: 100%; padding: 14px; font-size: 17px; border: 1px solid #aaa; border-radius: 8px; margin: 15px 0; }
+
+    button { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; }
+
+  </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>Tambah Kelas Baru</h1>
+
+  <input type="text" id="kelasCode" placeholder="Contoh: DCS 5D atau DEC 3A" autofocus />
+
+  <button onclick="saveKelas()">Tambah & Kembali</button>
+
+</div>
+
+<script>
+
+  function saveKelas() {
+
+    const code = document.getElementById('kelasCode').value.trim();
+
+    if (!code) return alert("Sila masukkan kod kelas.");
+
+    let session = JSON.parse(localStorage.getItem('currentSpotcheckSession'));
+
+    if (!session) return alert("Sesi tidak ditemui.");
+
+    if (!session.kelasList) session.kelasList = [];
+
+    session.kelasList.push({ code, batches: [] });
+
+    localStorage.setItem('currentSpotcheckSession', JSON.stringify(session));
+
+    window.location.href = 'dashboard.html';
+
+  }
+
+</script>
+
+</body>
+
+</html>
