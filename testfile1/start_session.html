@@ -50,7 +50,7 @@
 
       <option value="2">Semester 2</option>
 
-      <option value="Pendek">Semester Pendek</option>
+      <option value="3">Semester 3</option>
 
     </select>
 
@@ -79,6 +79,7 @@
 </div>
 
 <script>
+  // Check if there's already a session
   if (localStorage.getItem('currentSpotcheckSession')) {
     if (!confirm("Ada sesi aktif. Teruskan akan timpa sesi lama. Terus?")) {
       window.location.href = 'dashboard.html';
@@ -86,32 +87,31 @@
     }
   }
 
+  // Listen for form submit
   document.getElementById('startForm').addEventListener('submit', function(e) {
+    e.preventDefault(); // Stop normal form submit
 
-    e.preventDefault();
+    // Debug: Show this alert to confirm button is clicked and code runs
+    alert("Form dihantar! Sedang cipta sesi...");
 
     const data = {
-
       semester: document.getElementById('semester').value,
-
       tahun: document.getElementById('tahun').value,
-
       nama: document.getElementById('nama_sesi').value.trim() || 'Sesi Tanpa Nama',
-
       started: new Date().toLocaleString('ms-MY'),
-
       kelasList: [],
-
       status: 'draft'
-
     };
 
+    // Save to localStorage
     localStorage.setItem('currentSpotcheckSession', JSON.stringify(data));
 
+    // Debug: Confirm save worked
+    alert("Sesi dicipta! Redirect ke dashboard...");
+
+    // Redirect
     window.location.href = 'dashboard.html';
-
   });
-
 </script>
 
 </body>
