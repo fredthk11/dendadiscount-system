@@ -4,71 +4,82 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Imbas QR Pelajar - Spotcheck</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8"></script> <!-- Pin version for stability -->
   <style>
-    body { 
-      font-family: Arial, Helvetica, sans-serif; 
-      margin: 12px; 
-      background: #f0f2f5; 
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 12px;
+      background: #f0f2f5;
       color: #333;
     }
-    .header { 
-      background: #1a3c6d; 
-      color: white; 
-      padding: 14px; 
-      text-align: center; 
-      border-radius: 10px; 
-      margin-bottom: 16px; 
+    .header {
+      background: #1a3c6d;
+      color: white;
+      padding: 14px;
+      text-align: center;
+      border-radius: 10px;
+      margin-bottom: 16px;
       font-size: 1.1em;
+      line-height: 1.4;
     }
+    .status {
+      font-weight: bold;
+      margin: 8px 0;
+      padding: 8px;
+      border-radius: 6px;
+    }
+    .status.ready { background: #d4edda; color: #155724; }
+    .status.loading { background: #fff3cd; color: #856404; }
+    .status.error { background: #f8d7da; color: #721c24; }
     label {
       display: block;
       margin: 12px 0 6px;
       font-weight: bold;
       font-size: 1.05em;
     }
-    select, button { 
-      width: 100%; 
-      padding: 12px; 
-      margin: 8px 0; 
-      border-radius: 8px; 
-      font-size: 16px; 
+    select, button, input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      font-size: 16px;
       border: 1px solid #ccc;
       box-sizing: border-box;
     }
     select:focus, button:focus {
       outline: 2px solid #007bff;
     }
-    #reader { 
-      width: 100%; 
-      max-width: 400px; 
-      margin: 16px auto; 
-      border: 3px solid #007bff; 
-      border-radius: 12px; 
-      overflow: hidden; 
+    #reader {
+      width: 100%;
+      max-width: 420px;
+      margin: 16px auto;
+      border: 3px solid #007bff;
+      border-radius: 12px;
+      overflow: hidden;
       background: #000;
+      min-height: 300px;
     }
-    .queue { 
-      background: white; 
-      padding: 16px; 
-      border-radius: 10px; 
-      margin-top: 16px; 
+    .queue {
+      background: white;
+      padding: 16px;
+      border-radius: 10px;
+      margin-top: 16px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.12);
     }
-    .student-item { 
-      padding: 12px 8px; 
-      border-bottom: 1px solid #eee; 
-      display: flex; 
-      justify-content: space-between; 
+    .student-item {
+      padding: 12px 8px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
       align-items: center;
       font-size: 1.05em;
     }
-    .remove { 
-      color: #dc3545; 
-      font-weight: bold; 
-      cursor: pointer; 
-      padding: 4px 10px; 
-      border: 1px solid #dc3545; 
+    .remove {
+      color: #dc3545;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 6px 12px;
+      border: 1px solid #dc3545;
       border-radius: 6px;
       font-size: 0.95em;
     }
@@ -86,20 +97,24 @@
     .btn-primary:hover { background: #0056b3; }
     .btn-secondary { background: #6c757d; color: white; border: none; cursor: pointer; }
     .btn-secondary:hover { background: #5a6268; }
+    .btn-permission { background: #28a745; color: white; font-size: 1.1em; padding: 16px; }
+    .btn-permission:hover { background: #218838; }
   </style>
 </head>
 <body>
 
 <div class="header" id="header">Memuat...</div>
 
+<div id="status" class="status loading">Sedang memuat kamera...</div>
+
 <label>Kesalahan Pelajar:</label>
 <select id="category">
   <option value="">-- Pilih Kesalahan --</option>
-  <option value="rambut_panjang">1. Rambut Panjang</option>
-  <option value="tiada_id">2. Tidak membawa ID Student</option>
-  <option value="selipar">3. Memakai Selipar</option>
-  <option value="tidak_formal">4. Tidak memakai pakaian formal</option>
-  <option value="tiada_tudung">5. Tidak memakai tudung bagi pelajar perempuan</option>
+  <option value="rambut_panjang" data-denda="20.00">1. Rambut Panjang (RM20)</option>
+  <option value="tiada_id" data-denda="30.00">2. Tidak membawa ID Student (RM30)</option>
+  <option value="selipar" data-denda="10.00">3. Memakai Selipar (RM10)</option>
+  <option value="tidak_formal" data-denda="50.00">4. Tidak memakai pakaian formal (RM50)</option>
+  <option value="tiada_tudung" data-denda="30.00">5. Tidak memakai tudung bagi pelajar perempuan (RM30)</option>
 </select>
 
 <div id="reader"></div>
@@ -109,35 +124,61 @@
   <div id="queueList"></div>
 
   <div class="buttons">
+    <button id="permissionBtn" class="btn-permission" style="display:none;" onclick="requestCameraPermission()">Benarkan Akses Kamera</button>
     <button class="btn-primary" onclick="addBatchToSession()">Tambah Batch ke Sesi</button>
     <button class="btn-secondary" onclick="window.location.href='dashboard.html'">Kembali ke Dashboard</button>
+    <button class="btn-secondary" onclick="restartScanner()">Mulakan Semula Scanner</button>
   </div>
 </div>
 
 <script>
-  let scanner;
+  let scanner = null;
   const scanned = new Set();
   const queueList = document.getElementById('queueList');
   const countEl = document.getElementById('count');
+  const headerEl = document.getElementById('header');
+  const statusEl = document.getElementById('status');
+  const permissionBtn = document.getElementById('permissionBtn');
 
   // Load session data
   const session = JSON.parse(localStorage.getItem('currentSpotcheckSession'));
   const kelasIndex = localStorage.getItem('currentKelasIndex');
 
   if (!session || kelasIndex === null || !session.kelasList?.[kelasIndex]) {
-    document.getElementById('header').innerHTML = 'Sesi atau kelas tidak ditemui. Sila kembali ke dashboard.';
+    headerEl.innerHTML = 'Sesi atau kelas tidak ditemui. Sila kembali ke dashboard.';
+    statusEl.style.display = 'none';
     return;
   }
 
   const currentKelas = session.kelasList[kelasIndex];
-  document.getElementById('header').innerHTML = `
+  headerEl.innerHTML = `
     Sesi: ${session.nama || 'Sesi Spotcheck'}<br>
     Kelas: ${currentKelas.code || 'Tidak ditetapkan'}
   `;
 
-  function onScanSuccess(decodedText, decodedResult) {
-    if (scanned.has(decodedText)) return;
+  // Simple beep sound for scan success
+  function playBeep() {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+    oscillator.connect(audioCtx.destination);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.1);
+  }
 
+  function updateStatus(text, className = 'loading') {
+    statusEl.textContent = text;
+    statusEl.className = `status ${className}`;
+  }
+
+  function showPermissionMessage() {
+    updateStatus('Akses kamera tidak dibenarkan. Tekan butang di bawah untuk membenarkan semula.', 'error');
+    permissionBtn.style.display = 'block';
+  }
+
+  function onScanSuccess(decodedText) {
+    if (scanned.has(decodedText)) return;
     scanned.add(decodedText);
     const div = document.createElement('div');
     div.className = 'student-item';
@@ -148,8 +189,9 @@
     queueList.appendChild(div);
     countEl.textContent = scanned.size;
 
-    // Optional: vibration feedback on mobile
     if (navigator.vibrate) navigator.vibrate(80);
+    playBeep();
+    updateStatus(`Kamera sedia - ${scanned.size} pelajar diimbas`);
   }
 
   function removeStudent(id, element) {
@@ -158,49 +200,87 @@
     countEl.textContent = scanned.size;
   }
 
-  // Initialize scanner
-  scanner = new Html5QrcodeScanner(
-    "reader",
-    { 
-      fps: 12, 
-      qrbox: { width: 280, height: 280 },
-      aspectRatio: 1.0,
-      disableFlip: false
+  async function initScanner() {
+    if (scanner) {
+      await scanner.clear().catch(() => {});
     }
-  );
-  scanner.render(onScanSuccess);
+
+    scanner = new Html5QrcodeScanner(
+      "reader",
+      {
+        fps: 12,
+        qrbox: { width: 280, height: 280 },
+        aspectRatio: 1.0,
+        disableFlip: false,
+        videoConstraints: { facingMode: "environment" }
+      }
+    );
+
+    try {
+      await scanner.render(onScanSuccess);
+      updateStatus("Kamera sedia", "ready");
+      permissionBtn.style.display = 'none';
+    } catch (err) {
+      console.error("Scanner error:", err);
+      if (err.name === 'NotAllowedError' || err.message.includes('Permission')) {
+        showPermissionMessage();
+      } else if (err.message.includes('No camera')) {
+        updateStatus("Tiada kamera dikesan atau peranti tidak menyokong.", "error");
+      } else {
+        updateStatus("Gagal mulakan kamera: " + err.message, "error");
+      }
+    }
+  }
+
+  function requestCameraPermission() {
+    updateStatus("Meminta akses kamera semula...", "loading");
+    permissionBtn.style.display = 'none';
+    initScanner();
+  }
+
+  function restartScanner() {
+    updateStatus("Memulakan semula scanner...", "loading");
+    initScanner();
+  }
 
   function addBatchToSession() {
     if (scanned.size === 0) {
       return alert("Tiada pelajar diimbas lagi.");
     }
 
-    const selectedCategory = document.getElementById('category').value;
-    if (!selectedCategory) {
+    const selectedCategory = document.getElementById('category');
+    if (!selectedCategory.value) {
       return alert("Sila pilih jenis kesalahan terlebih dahulu.");
     }
+
+    const denda = selectedCategory.options[selectedCategory.selectedIndex].dataset.denda || '0.00';
 
     if (!currentKelas.batches) currentKelas.batches = [];
 
     currentKelas.batches.push({
-      category: selectedCategory,
+      category: selectedCategory.value,
+      denda: denda,
       students: Array.from(scanned),
       added: new Date().toLocaleString('ms-MY')
     });
 
     localStorage.setItem('currentSpotcheckSession', JSON.stringify(session));
 
-    alert(`Batch (${selectedCategory}) berjaya ditambah!\nJumlah pelajar: ${scanned.size}`);
+    alert(`Batch (${selectedCategory.options[selectedCategory.selectedIndex].text}) berjaya ditambah!\nJumlah pelajar: ${scanned.size}\nAnggaran denda setiap orang: RM${denda}`);
 
-    // Clear current queue
     scanned.clear();
     queueList.innerHTML = '';
     countEl.textContent = '0';
   }
 
-  // Clean up scanner when leaving page (good practice)
+  // Start scanner on load
+  window.addEventListener('load', () => {
+    initScanner();
+  });
+
+  // Cleanup
   window.addEventListener('beforeunload', () => {
-    if (scanner) scanner.clear();
+    if (scanner) scanner.clear().catch(() => {});
   });
 </script>
 
