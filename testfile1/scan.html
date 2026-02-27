@@ -1,0 +1,163 @@
+
+
+<!DOCTYPE html>
+
+<html lang="ms">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>Imbas QR Pelajar</title>
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+
+    body { font-family: Arial, sans-serif; margin: 12px; background: #f0f2f5; }
+
+    .header { background: #1a3c6d; color: white; padding: 12px; text-align: center; border-radius: 10px; margin-bottom: 15px; }
+
+    select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; font-size: 16px; }
+
+    #reader { width: 100%; max-width: 380px; margin: 15px auto; border: 3px solid #007bff; border-radius: 12px; overflow: hidden; }
+
+    .queue { background: white; padding: 15px; border-radius: 10px; margin-top: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+
+    .student-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+
+    .remove { color: #dc3545; font-weight: bold; cursor: pointer; }
+
+  </style>
+
+</head>
+
+<body>
+
+<div class="header" id="header">Memuat...</div>
+
+<select id="category">
+
+  <option value="">-- Pilih Kategori Kesalahan --</option>
+
+  <option value="pengurusan_bilik">Pengurusan Bilik & Asrama</option>
+
+  <option value="peralatan">Peralatan & Barangan Terlarang</option>
+
+  <option value="kenderaan">Kenderaan</option>
+
+  <option value="tingkah_laku">Tingkah Laku & Ketenteraman</option>
+
+  <option value="perniagaan">Perniagaan</option>
+
+  <option value="keselamatan">Keselamatan & Am</option>
+
+</select>
+
+<div id="reader"></div>
+
+<div class="queue">
+
+  <h3>Senarai Imbasan Semasa (<span id="count">0</span>)</h3>
+
+  <div id="queueList"></div>
+
+  <button onclick="addBatchToSession()">Tambah Batch ke Sesi</button>
+
+  <button onclick="window.location.href='dashboard.html'">Kembali ke Dashboard</button>
+
+</div>
+
+<script>
+
+  let scanner;
+
+  const scanned = new Set();
+
+  const queueList = document.getElementById('queueList');
+
+  const countEl = document.getElementById('count');
+
+  const session = JSON.parse(localStorage.getItem('currentSpotcheckSession'));
+
+  const kelasIndex = localStorage.getItem('currentKelasIndex');
+
+  if (!session || kelasIndex === null) {
+
+    document.getElementById('header').innerHTML = 'Sesi atau kelas tidak ditemui';
+
+    return;
+
+  }
+
+  const currentKelas = session.kelasList[kelasIndex];
+
+  document.getElementById('header').innerHTML = `
+
+    Sesi: ${session.nama}<br>
+
+    Kelas: ${currentKelas.code}
+
+  `;
+
+  function onScanSuccess(text) {
+
+    if (scanned.has(text)) return;
+
+    scanned.add(text);
+
+    const div = document.createElement('div');
+
+    div.className = 'student-item';
+
+    div.innerHTML = `<span>${text}</span><span class="remove" onclick="this.parentElement.remove(); scanned.delete('${text}'); countEl.textContent = scanned.size;">Buang</span>`;
+
+    queueList.appendChild(div);
+
+    countEl.textContent = scanned.size;
+
+  }
+
+  scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 280, height: 280} });
+
+  scanner.render(onScanSuccess);
+
+  function addBatchToSession() {
+
+    if (scanned.size === 0) return alert("Tiada pelajar diimbas.");
+
+    const cat = document.getElementById('category').value;
+
+    if (!cat) return alert("Sila pilih kategori kesalahan.");
+
+    if (!currentKelas.batches) currentKelas.batches = [];
+
+    currentKelas.batches.push({
+
+      category: cat,
+
+      students: Array.from(scanned),
+
+      added: new Date().toLocaleString()
+
+    });
+
+    localStorage.setItem('currentSpotcheckSession', JSON.stringify(session));
+
+    alert(`Batch ${cat} (${scanned.size} pelajar) ditambah ke sesi!`);
+
+    scanned.clear();
+
+    queueList.innerHTML = '';
+
+    countEl.textContent = '0';
+
+  }
+
+</script>
+
+</body>
+
+</html>
