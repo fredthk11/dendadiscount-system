@@ -88,7 +88,13 @@
 </div>
 
 <script>
-  const session = JSON.parse(localStorage.getItem('currentSpotcheckSession'));
+    const session = JSON.parse(localStorage.getItem('currentSpotcheckSession')) || null;
+
+      if (!session) {
+        document.getElementById('summary').innerHTML = 
+          '<p style="color:red; text-align:center; font-size:1.2em;">Tiada sesi ditemui.<br><a href="start_session.html">Mula sesi baru</a></p>';
+        return;
+      }
 
   function renderSummary() {
     const summaryEl = document.getElementById('summary');
