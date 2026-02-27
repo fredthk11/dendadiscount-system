@@ -1,163 +1,208 @@
-
-
 <!DOCTYPE html>
-
 <html lang="ms">
-
 <head>
-
   <meta charset="UTF-8" />
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-  <title>Imbas QR Pelajar</title>
-
+  <title>Imbas QR Pelajar - Spotcheck</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
-
   <style>
-
-    body { font-family: Arial, sans-serif; margin: 12px; background: #f0f2f5; }
-
-    .header { background: #1a3c6d; color: white; padding: 12px; text-align: center; border-radius: 10px; margin-bottom: 15px; }
-
-    select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; font-size: 16px; }
-
-    #reader { width: 100%; max-width: 380px; margin: 15px auto; border: 3px solid #007bff; border-radius: 12px; overflow: hidden; }
-
-    .queue { background: white; padding: 15px; border-radius: 10px; margin-top: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-
-    .student-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
-
-    .remove { color: #dc3545; font-weight: bold; cursor: pointer; }
-
+    body { 
+      font-family: Arial, Helvetica, sans-serif; 
+      margin: 12px; 
+      background: #f0f2f5; 
+      color: #333;
+    }
+    .header { 
+      background: #1a3c6d; 
+      color: white; 
+      padding: 14px; 
+      text-align: center; 
+      border-radius: 10px; 
+      margin-bottom: 16px; 
+      font-size: 1.1em;
+    }
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: bold;
+      font-size: 1.05em;
+    }
+    select, button { 
+      width: 100%; 
+      padding: 12px; 
+      margin: 8px 0; 
+      border-radius: 8px; 
+      font-size: 16px; 
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    select:focus, button:focus {
+      outline: 2px solid #007bff;
+    }
+    #reader { 
+      width: 100%; 
+      max-width: 400px; 
+      margin: 16px auto; 
+      border: 3px solid #007bff; 
+      border-radius: 12px; 
+      overflow: hidden; 
+      background: #000;
+    }
+    .queue { 
+      background: white; 
+      padding: 16px; 
+      border-radius: 10px; 
+      margin-top: 16px; 
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+    }
+    .student-item { 
+      padding: 12px 8px; 
+      border-bottom: 1px solid #eee; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      font-size: 1.05em;
+    }
+    .remove { 
+      color: #dc3545; 
+      font-weight: bold; 
+      cursor: pointer; 
+      padding: 4px 10px; 
+      border: 1px solid #dc3545; 
+      border-radius: 6px;
+      font-size: 0.95em;
+    }
+    .remove:hover {
+      background: #dc3545;
+      color: white;
+    }
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .btn-primary { background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
+    .btn-primary:hover { background: #0056b3; }
+    .btn-secondary { background: #6c757d; color: white; border: none; cursor: pointer; }
+    .btn-secondary:hover { background: #5a6268; }
   </style>
-
 </head>
-
 <body>
 
 <div class="header" id="header">Memuat...</div>
 
+<label>Kesalahan Pelajar:</label>
 <select id="category">
-
-  <option value="">-- Pilih Kategori Kesalahan --</option>
-
-  <option value="pengurusan_bilik">Pengurusan Bilik & Asrama</option>
-
-  <option value="peralatan">Peralatan & Barangan Terlarang</option>
-
-  <option value="kenderaan">Kenderaan</option>
-
-  <option value="tingkah_laku">Tingkah Laku & Ketenteraman</option>
-
-  <option value="perniagaan">Perniagaan</option>
-
-  <option value="keselamatan">Keselamatan & Am</option>
-
+  <option value="">-- Pilih Kesalahan --</option>
+  <option value="rambut_panjang">1. Rambut Panjang</option>
+  <option value="tiada_id">2. Tidak membawa ID Student</option>
+  <option value="selipar">3. Memakai Selipar</option>
+  <option value="tidak_formal">4. Tidak memakai pakaian formal</option>
+  <option value="tiada_tudung">5. Tidak memakai tudung bagi pelajar perempuan</option>
 </select>
 
 <div id="reader"></div>
 
 <div class="queue">
-
   <h3>Senarai Imbasan Semasa (<span id="count">0</span>)</h3>
-
   <div id="queueList"></div>
 
-  <button onclick="addBatchToSession()">Tambah Batch ke Sesi</button>
-
-  <button onclick="window.location.href='dashboard.html'">Kembali ke Dashboard</button>
-
+  <div class="buttons">
+    <button class="btn-primary" onclick="addBatchToSession()">Tambah Batch ke Sesi</button>
+    <button class="btn-secondary" onclick="window.location.href='dashboard.html'">Kembali ke Dashboard</button>
+  </div>
 </div>
 
 <script>
-
   let scanner;
-
   const scanned = new Set();
-
   const queueList = document.getElementById('queueList');
-
   const countEl = document.getElementById('count');
 
+  // Load session data
   const session = JSON.parse(localStorage.getItem('currentSpotcheckSession'));
-
   const kelasIndex = localStorage.getItem('currentKelasIndex');
 
-  if (!session || kelasIndex === null) {
-
-    document.getElementById('header').innerHTML = 'Sesi atau kelas tidak ditemui';
-
+  if (!session || kelasIndex === null || !session.kelasList?.[kelasIndex]) {
+    document.getElementById('header').innerHTML = 'Sesi atau kelas tidak ditemui. Sila kembali ke dashboard.';
     return;
-
   }
 
   const currentKelas = session.kelasList[kelasIndex];
-
   document.getElementById('header').innerHTML = `
-
-    Sesi: ${session.nama}<br>
-
-    Kelas: ${currentKelas.code}
-
+    Sesi: ${session.nama || 'Sesi Spotcheck'}<br>
+    Kelas: ${currentKelas.code || 'Tidak ditetapkan'}
   `;
 
-  function onScanSuccess(text) {
+  function onScanSuccess(decodedText, decodedResult) {
+    if (scanned.has(decodedText)) return;
 
-    if (scanned.has(text)) return;
-
-    scanned.add(text);
-
+    scanned.add(decodedText);
     const div = document.createElement('div');
-
     div.className = 'student-item';
-
-    div.innerHTML = `<span>${text}</span><span class="remove" onclick="this.parentElement.remove(); scanned.delete('${text}'); countEl.textContent = scanned.size;">Buang</span>`;
-
+    div.innerHTML = `
+      <span>${decodedText}</span>
+      <span class="remove" onclick="removeStudent('${decodedText}', this)">Buang</span>
+    `;
     queueList.appendChild(div);
-
     countEl.textContent = scanned.size;
 
+    // Optional: vibration feedback on mobile
+    if (navigator.vibrate) navigator.vibrate(80);
   }
 
-  scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 280, height: 280} });
+  function removeStudent(id, element) {
+    scanned.delete(id);
+    element.parentElement.remove();
+    countEl.textContent = scanned.size;
+  }
 
+  // Initialize scanner
+  scanner = new Html5QrcodeScanner(
+    "reader",
+    { 
+      fps: 12, 
+      qrbox: { width: 280, height: 280 },
+      aspectRatio: 1.0,
+      disableFlip: false
+    }
+  );
   scanner.render(onScanSuccess);
 
   function addBatchToSession() {
+    if (scanned.size === 0) {
+      return alert("Tiada pelajar diimbas lagi.");
+    }
 
-    if (scanned.size === 0) return alert("Tiada pelajar diimbas.");
-
-    const cat = document.getElementById('category').value;
-
-    if (!cat) return alert("Sila pilih kategori kesalahan.");
+    const selectedCategory = document.getElementById('category').value;
+    if (!selectedCategory) {
+      return alert("Sila pilih jenis kesalahan terlebih dahulu.");
+    }
 
     if (!currentKelas.batches) currentKelas.batches = [];
 
     currentKelas.batches.push({
-
-      category: cat,
-
+      category: selectedCategory,
       students: Array.from(scanned),
-
-      added: new Date().toLocaleString()
-
+      added: new Date().toLocaleString('ms-MY')
     });
 
     localStorage.setItem('currentSpotcheckSession', JSON.stringify(session));
 
-    alert(`Batch ${cat} (${scanned.size} pelajar) ditambah ke sesi!`);
+    alert(`Batch (${selectedCategory}) berjaya ditambah!\nJumlah pelajar: ${scanned.size}`);
 
+    // Clear current queue
     scanned.clear();
-
     queueList.innerHTML = '';
-
     countEl.textContent = '0';
-
   }
 
+  // Clean up scanner when leaving page (good practice)
+  window.addEventListener('beforeunload', () => {
+    if (scanner) scanner.clear();
+  });
 </script>
 
 </body>
-
 </html>
