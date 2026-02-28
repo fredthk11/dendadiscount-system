@@ -12,8 +12,8 @@ Digital disciplinary record management system for student spotchecks (JDK / univ
 
 ## How to Run (Local)
 1. Clone or download repo
-2. Open `testfile1/start_session.html` in browser
-3. Follow flow: Start session → Dashboard → Add kelas → Scan
+2. Open `testfile1/dashboard.html` in browser
+3. Follow flow: Dashboard → Start session → Add kelas → Scan → Review
 
 Live demo: [https://fredthk11.github.io/dendadiscount-system/testfile1/dashboard.html](https://fredthk11.github.io/dendadiscount-system/testfile1/dashboard.html) (once Pages enabled)
 
