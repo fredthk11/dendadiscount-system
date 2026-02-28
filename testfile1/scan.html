@@ -11,6 +11,19 @@
     
     .section { background: white; padding: 16px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
     
+    /* NEW: Status Message Styling */
+    #statusMessage { 
+        background: #d1ecf1; 
+        color: #0c5460; 
+        padding: 10px; 
+        border-radius: 8px; 
+        text-align: center; 
+        margin-bottom: 10px; 
+        font-weight: bold;
+        display: none; /* Hidden by default */
+        border: 1px solid #bee5eb;
+    }
+
     label { display: block; margin: 12px 0 4px; font-weight: bold; }
     select, button, input { width: 100%; padding: 12px; margin: 8px 0 12px; border-radius: 8px; font-size: 16px; border: 1px solid #ccc; box-sizing: border-box; }
     
@@ -35,12 +48,14 @@
 <div class="header" id="header">Memuat Sesi...</div>
 
 <div class="section">
+  <div id="statusMessage"></div>
+
   <div id="reader"></div>
   <button id="startBtn" class="btn-primary" onclick="startScanner()">Buka Kamera & Imbas QR</button>
   
-  <label>Input Manual (Format: ICS24-02-072):</label>
+  <label>Input Manual (Format: XXX00-00-000):</label>
   <div class="manual-row">
-    <input type="text" id="manualId" placeholder="ICS24-02-072" maxlength="12" oninput="applyMask(this)" onkeypress="handleKeyPress(event)">
+    <input type="text" id="manualId" placeholder="XXX00-00-000" maxlength="12" oninput="applyMask(this)" onkeypress="handleKeyPress(event)">
     <button class="btn-add-manual" onclick="addManualId()">Tambah</button>
   </div>
 </div>
@@ -70,6 +85,7 @@
 <script>
   let scanner = null;
   let scannedIds = new Set();
+  let statusTimeout = null;
   
   let session = JSON.parse(localStorage.getItem('currentSpotcheckSession'));
   const kelasIdx = localStorage.getItem('currentKelasIndex');
@@ -82,7 +98,6 @@
       renderHistory();
   }
 
-  // ID Formatting: XXX00-00-000
   function applyMask(input) {
     let value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     let formatted = "";
@@ -113,13 +128,35 @@
     scanner.render((text) => addToQueue(text));
   }
 
+  // UPDATED: addToQueue now handles the visual status message
   function addToQueue(id) {
     const cleanId = id.trim().toUpperCase();
+    const statusEl = document.getElementById('statusMessage');
+
     if (!scannedIds.has(cleanId)) {
       scannedIds.add(cleanId);
       renderQueue();
+      
+      // Show success message
+      statusEl.innerText = `✅ ${cleanId} telah ditambah!`;
+      statusEl.style.display = 'block';
+      statusEl.style.background = '#d4edda'; // Green success
+      statusEl.style.color = '#155724';
+
       if (navigator.vibrate) navigator.vibrate(100);
+    } else {
+      // Show "already exists" message
+      statusEl.innerText = `⚠️ ${cleanId} sudah ada dalam senarai.`;
+      statusEl.style.display = 'block';
+      statusEl.style.background = '#fff3cd'; // Yellow warning
+      statusEl.style.color = '#856404';
     }
+
+    // Auto-hide message after 3 seconds
+    clearTimeout(statusTimeout);
+    statusTimeout = setTimeout(() => {
+        statusEl.style.display = 'none';
+    }, 3000);
   }
 
   function renderQueue() {
@@ -149,7 +186,6 @@
     const currentBatches = session.kelasList[kelasIdx].batches;
     const newStudents = Array.from(scannedIds);
 
-    // SMART MERGING LOGIC
     const existingBatch = currentBatches.find(b => b.category === cat);
 
     if (existingBatch) {
