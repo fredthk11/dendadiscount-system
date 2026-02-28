@@ -82,19 +82,15 @@
   document.getElementById('startForm').addEventListener('submit', function(e) {
     e.preventDefault(); // Stop normal form submit
 
-    // Now check for existing session HERE (when button is clicked)
+    // Only check existing session when user tries to submit
     if (localStorage.getItem('currentSpotcheckSession')) {
       if (!confirm("Ada sesi aktif. Teruskan akan timpa sesi lama. Terus?")) {
-        // User said NO → go to dashboard instead of creating new
         window.location.href = 'dashboard.html';
-        return;
+        return; // Stop here — don't create new session
       }
-      // User said YES → continue to create/overwrite
     }
 
-    // Debug alert to confirm code runs (remove later if you want)
-    alert("Form dihantar! Sedang cipta sesi...");
-
+    // If we reach here → either no old session, or user clicked OK
     const data = {
       semester: document.getElementById('semester').value,
       tahun: document.getElementById('tahun').value,
@@ -106,8 +102,8 @@
 
     localStorage.setItem('currentSpotcheckSession', JSON.stringify(data));
 
-    // Debug alert
-    alert("Sesi dicipta! Redirect ke dashboard...");
+    // Optional: debug alert to confirm
+    // alert("Sesi baru dicipta! Redirect ke dashboard...");
 
     window.location.href = 'dashboard.html';
   });
