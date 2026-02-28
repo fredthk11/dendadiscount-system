@@ -29,10 +29,7 @@
 
     <label>Tahun Akademik:</label>
     <select id="tahun" required>
-      <option value="">-- Pilih --</option>
-      <option value="2024/2025">2024/2025</option>
-      <option value="2025/2026" selected>2025/2026</option>
-      <option value="2026/2027">2026/2027</option>
+      <option value="">-- Memuatkan Tahun... --</option>
     </select>
 
     <label>Nama / Kod Sesi (contoh: Rondaan Week 8):</label>
@@ -42,10 +39,36 @@
 </div>
 
 <script>
+  // 1. DYNAMIC YEAR LOGIC
+  function initializeYears() {
+    const tahunSelect = document.getElementById('tahun');
+    const currentYear = new Date().getFullYear(); // e.g., 2026
+    
+    // Calculate the 3-year range
+    const years = [currentYear - 1, currentYear, currentYear + 1];
+    
+    // Clear the "Loading" option
+    tahunSelect.innerHTML = '<option value="">-- Pilih Tahun --</option>';
+    
+    // Generate options in format XXXX/YYYY
+    years.forEach(y => {
+      const optionText = `${y}/${y + 1}`;
+      const option = document.createElement('option');
+      option.value = optionText;
+      option.textContent = optionText;
+      
+      // We don't auto-select, but we can make it easier to find current year
+      tahunSelect.appendChild(option);
+    });
+  }
+
+  // Run the year generator immediately
+  initializeYears();
+
+  // 2. FORM SUBMISSION LOGIC
   document.getElementById('startForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    // FIX: Changed 'semester' to 'sesi' to match the HTML ID above
     const sesiValue = document.getElementById('sesi').value;
     const tahunValue = document.getElementById('tahun').value;
     const namaValue = document.getElementById('nama_sesi').value.trim();
@@ -60,10 +83,6 @@
     };
 
     localStorage.setItem('currentSpotcheckSession', JSON.stringify(data));
-    
-    // Debugging: Log to console so you can see it working in F12
-    console.log("Session Created:", data);
-    
     window.location.href = 'dashboard.html';
   });
 </script>
