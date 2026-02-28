@@ -43,15 +43,10 @@
   
   <label>Input Manual (Tiada ID Card / Rosak):</label>
   <div class="manual-row">
-    <input type="text" id="manualId" placeholder="Taip No. ID atau Nama..." onkeypress="handleKeyPress(event)">
+    <input type="text" id="manualId" placeholder="ICS00-00-000" onkeypress="handleKeyPress(event)">
     <button class="btn-add-manual" onclick="addManualId()">Tambah</button>
   </div>
 </div>
-
-<div class="section">
-  <h3>Senarai Menunggu (<span id="count">0</span>)</h3>
-  <div id="queueList"></div>
-
   <label style="margin-top:20px;">Jenis Kesalahan:</label>
   <select id="category">
     <option value="">-- Pilih Kesalahan --</option>
@@ -60,6 +55,12 @@
     <option value="Selipar">3. Memakai Selipar</option>
     <option value="Pakaian Tidak Formal">4. Tidak Formal</option>
   </select>
+
+<div class="section">
+  <h3>Senarai Menunggu (<span id="count">0</span>)</h3>
+  <div id="queueList"></div>
+
+  
 
   <button class="btn-save" onclick="saveBatch()">Simpan Semua ke Sesi</button>
 </div>
