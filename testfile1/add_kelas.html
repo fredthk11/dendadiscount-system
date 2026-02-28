@@ -41,26 +41,22 @@
 </div>
 
 <script>
-
+  
   function saveKelas() {
-
     const code = document.getElementById('kelasCode').value.trim();
-
-    if (!code) return alert("Sila masukkan kod kelas.");
+    if (!code) return alert("Sila masukkan kod.");
 
     let session = JSON.parse(localStorage.getItem('currentSpotcheckSession'));
+    if (!session) {
+        alert("Sesi tidak aktif! Kembali ke dashboard.");
+        window.location.href = 'dashboard.html';
+        return;
+    }
 
-    if (!session) return alert("Sesi tidak ditemui.");
-
-    if (!session.kelasList) session.kelasList = [];
-
-    session.kelasList.push({ code, batches: [] });
-
+    session.kelasList.push({ code: code, batches: [] });
     localStorage.setItem('currentSpotcheckSession', JSON.stringify(session));
-
     window.location.href = 'dashboard.html';
-
-  }
+}
 
 </script>
 
