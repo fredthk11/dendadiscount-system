@@ -1,103 +1,72 @@
-
-
 <!DOCTYPE html>
-
 <html lang="ms">
-
 <head>
-
   <meta charset="UTF-8" />
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
   <title>Mula Sesi Spotcheck Baru</title>
-
   <style>
-
     body { font-family: Arial, sans-serif; margin: 20px; background: #f0f2f5; }
-
     .container { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
     h1 { text-align: center; color: #1a3c6d; }
-
     label { display: block; margin: 12px 0 6px; font-weight: bold; }
-
     input, select, button { width: 100%; padding: 12px; margin: 6px 0; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
-
     button { background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
-
     button:hover { background: #0056b3; }
-
   </style>
-
 </head>
-
 <body>
 
 <div class="container">
-
   <h1>Mula Sesi Spotcheck Baru</h1>
-
   <form id="startForm">
-
     <label>Sesi:</label>
-
     <select id="sesi" required>
-
       <option value="">-- Pilih --</option>
-
       <option value="1">Sesi 1</option>
-
       <option value="2">Sesi 2</option>
-
       <option value="3">Sesi 3</option>
-
     </select>
 
     <label>Tahun Akademik:</label>
-
     <select id="tahun" required>
-
       <option value="">-- Pilih --</option>
-
       <option value="2024/2025">2024/2025</option>
-
       <option value="2025/2026" selected>2025/2026</option>
-
       <option value="2026/2027">2026/2027</option>
-
     </select>
 
-    <label>Nama / Kod Sesi (contoh: Rondaan Blok ETC Pagi):</label>
-
+    <label>Nama / Kod Sesi (contoh: Rondaan Week 8):</label>
     <input type="text" id="nama_sesi" placeholder="Masukkan nama sesi" required />
-
     <button type="submit">Cipta Sesi & Teruskan</button>
-
   </form>
-
 </div>
 
 <script>
-  
   document.getElementById('startForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
+    // FIX: Changed 'semester' to 'sesi' to match the HTML ID above
+    const sesiValue = document.getElementById('sesi').value;
+    const tahunValue = document.getElementById('tahun').value;
+    const namaValue = document.getElementById('nama_sesi').value.trim();
+
     const data = {
-        sesi: document.getElementById('semester').value,
-        tahun: document.getElementById('tahun').value,
-        nama: document.getElementById('nama_sesi').value.trim(),
+        sesi: sesiValue,
+        tahun: tahunValue,
+        nama: namaValue,
         started: new Date().toLocaleString('ms-MY'),
         kelasList: [],
         status: 'draft'
     };
 
     localStorage.setItem('currentSpotcheckSession', JSON.stringify(data));
+    
+    // Debugging: Log to console so you can see it working in F12
+    console.log("Session Created:", data);
+    
     window.location.href = 'dashboard.html';
-});
- 
+  });
 </script>
 
 </body>
-
 </html>
