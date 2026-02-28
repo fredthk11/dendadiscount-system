@@ -44,6 +44,7 @@
 </div>
 
 <script>
+  <script>
   function generateReport() {
     const session = JSON.parse(localStorage.getItem('currentSpotcheckSession'));
     const content = document.getElementById('reportContent');
@@ -54,40 +55,41 @@
       return;
     }
 
-    // Set Meta Header
+    // Set Meta Header - UPDATED to use session.sesi
     meta.innerHTML = `
-      <b>Sesi:</b> ${session.nama} <br>
-      <b>Semester:</b> ${session.semester} | <b>Tahun:</b> ${session.tahun} <br>
+      <b>Nama Sesi:</b> ${session.nama} <br>
+      <b>Sesi:</b> ${session.sesi} | <b>Tahun:</b> ${session.tahun} <br>
       <b>Tarikh Mula:</b> ${session.started}
     `;
 
     let totalAll = 0;
     content.innerHTML = '';
 
-    session.kelasList.forEach(kelas => {
+    // Logic for classes and batches remains the same
+    (session.kelasList || []).forEach(kelas => {
       // Add Class Row
       const rowKelas = document.createElement('tr');
       rowKelas.className = 'class-header';
       rowKelas.innerHTML = `<td colspan="3">UNIT: ${kelas.code}</td>`;
       content.appendChild(rowKelas);
 
-      if (kelas.batches.length === 0) {
+      if (!kelas.batches || kelas.batches.length === 0) {
         const emptyRow = document.createElement('tr');
         emptyRow.innerHTML = `<td colspan="3" style="color:gray; text-align:center">Tiada kesalahan direkodkan</td>`;
         content.appendChild(emptyRow);
+      } else {
+        // Add Batch Rows
+        kelas.batches.forEach(batch => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${batch.category}</td>
+            <td><small>${batch.students.join(', ')}</small></td>
+            <td>${batch.students.length}</td>
+          `;
+          content.appendChild(row);
+          totalAll += batch.students.length;
+        });
       }
-
-      // Add Batch Rows
-      kelas.batches.forEach(batch => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${batch.category}</td>
-          <td><small>${batch.students.join(', ')}</small></td>
-          <td>${batch.students.length}</td>
-        `;
-        content.appendChild(row);
-        totalAll += batch.students.length;
-      });
     });
 
     // Final Total Row
@@ -100,6 +102,7 @@
 
   // Run on load
   generateReport();
+</script>
 </script>
 
 </body>
