@@ -77,10 +77,12 @@
 </div>
 
 <script>
-  // GLOBAL STORAGE HANDLERS
+  <script>
+// GLOBAL STORAGE HANDLERS
 function getSession() {
     return JSON.parse(localStorage.getItem('currentSpotcheckSession')) || null;
 }
+
 function saveSession(data) {
     localStorage.setItem('currentSpotcheckSession', JSON.stringify(data));
 }
@@ -96,9 +98,10 @@ function renderDashboard() {
         return;
     }
 
+    // UPDATED: Changed 'Semester' to 'Sesi' and key to 'session.sesi'
     infoEl.innerHTML = `
         <strong>${session.nama}</strong><br>
-        Semester ${session.semester} | ${session.tahun}<br>
+        Sesi ${session.sesi} | ${session.tahun}<br>
         Dimulakan: ${session.started}<br>
         Status: <span style="color:blue">${session.status.toUpperCase()}</span>
     `;
@@ -107,6 +110,7 @@ function renderDashboard() {
     (session.kelasList || []).forEach((kelas, index) => {
         const div = document.createElement('div');
         div.className = 'kelas-item';
+        
         // Calculate total students in this class across all batches
         const totalInKelas = (kelas.batches || []).reduce((sum, b) => sum + b.students.length, 0);
         
@@ -138,10 +142,12 @@ function goToScan(index) {
     window.location.href = 'scan.html';
 }
 
-function goToReview() { window.location.href = 'review.html'; }
+function goToReview() { 
+    window.location.href = 'review.html'; 
+}
 
 function resetSession() {
-    if (confirm("Hapus semua data?")) {
+    if (confirm("Hapus semua data? Ini akan mengosongkan LocalStorage.")) {
         localStorage.clear();
         location.reload();
     }
@@ -149,9 +155,7 @@ function resetSession() {
 
 // Auto-run on load
 renderDashboard();
-
-  
-
+</script>
 </script>
 
 </body>
