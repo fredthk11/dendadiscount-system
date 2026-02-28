@@ -1,11 +1,70 @@
-<label>Input Manual (Format: ICS24-02-072):</label>
-<div class="manual-row">
-  <input type="text" id="manualId" 
-         placeholder="ICS24-02-072" 
-         maxlength="12" 
-         oninput="applyMask(this)"
-         onkeypress="handleKeyPress(event)">
-  <button class="btn-add-manual" onclick="addManualId()">Tambah</button>
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Imbas QR Pelajar - Spotcheck</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 12px; background: #f0f2f5; color: #333; }
+    .header { background: #1a3c6d; color: white; padding: 14px; text-align: center; border-radius: 10px; margin-bottom: 16px; }
+    
+    .section { background: white; padding: 16px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    
+    label { display: block; margin: 12px 0 4px; font-weight: bold; }
+    select, button, input { width: 100%; padding: 12px; margin: 8px 0 12px; border-radius: 8px; font-size: 16px; border: 1px solid #ccc; box-sizing: border-box; }
+    
+    #reader { width: 100%; max-width: 380px; margin: 0 auto 10px; border: 3px solid #007bff; border-radius: 12px; overflow: hidden; background: #000; display: none; }
+    
+    .manual-row { display: flex; gap: 8px; margin-top: 5px; }
+    .manual-row input { margin: 0; flex-grow: 1; border: 2px solid #6f42c1; text-transform: uppercase; }
+    .btn-add-manual { background: #6f42c1; color: white; border: none; width: auto; margin: 0; padding: 0 20px; font-weight: bold; }
+
+    .student-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .remove { color: #dc3545; font-weight: bold; cursor: pointer; border: 1px solid #dc3545; padding: 2px 8px; border-radius: 4px; }
+    .history-item { font-size: 0.9em; padding: 8px 0; border-bottom: 1px dashed #ccc; }
+    .history-item b { color: #d32f2f; }
+
+    .btn-primary { background: #007bff; color: white; border: none; font-weight: bold; }
+    .btn-save { background: #28a745; color: white; border: none; font-weight: bold; font-size: 18px; margin-top: 15px; }
+    .btn-secondary { background: #6c757d; color: white; border: none; }
+  </style>
+</head>
+<body>
+
+<div class="header" id="header">Memuat Sesi...</div>
+
+<div class="section">
+  <div id="reader"></div>
+  <button id="startBtn" class="btn-primary" onclick="startScanner()">Buka Kamera & Imbas QR</button>
+  
+  <label>Input Manual (Format: ICS24-02-072):</label>
+  <div class="manual-row">
+    <input type="text" id="manualId" placeholder="ICS24-02-072" maxlength="12" oninput="applyMask(this)" onkeypress="handleKeyPress(event)">
+    <button class="btn-add-manual" onclick="addManualId()">Tambah</button>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Senarai Menunggu (<span id="count">0</span>)</h3>
+  <div id="queueList"></div>
+
+  <label style="margin-top:20px;">Jenis Kesalahan:</label>
+  <select id="category">
+    <option value="">-- Pilih Kesalahan --</option>
+    <option value="Rambut Panjang">1. Rambut Panjang</option>
+    <option value="Tiada ID Card">2. Tiada ID Card</option>
+    <option value="Selipar">3. Memakai Selipar</option>
+    <option value="Pakaian Tidak Formal">4. Tidak Formal</option>
+  </select>
+
+  <button class="btn-save" onclick="saveBatch()">Simpan Semua ke Sesi</button>
+</div>
+
+<div class="section">
+  <h3 style="color:#1a3c6d; border-bottom: 2px solid #1a3c6d;">Sejarah Imbasan (Kelas Ini)</h3>
+  <div id="historyList">Tiada rekod disimpan lagi.</div>
+  <button class="btn-secondary" onclick="window.location.href='dashboard.html'" style="margin-top:20px;">Kembali ke Dashboard</button>
 </div>
 
 <script>
@@ -15,11 +74,18 @@
   let session = JSON.parse(localStorage.getItem('currentSpotcheckSession'));
   const kelasIdx = localStorage.getItem('currentKelasIndex');
   
-  // Enforce the Format: XXX00-00-000 (e.g., ICS24-02-072)
+  if (!session || kelasIdx === null || !session.kelasList[kelasIdx]) {
+      alert("Ralat: Sesi atau Kelas tidak dikesan!");
+      window.location.href = 'dashboard.html';
+  } else {
+      document.getElementById('header').innerHTML = `<b>Unit: ${session.kelasList[kelasIdx].code}</b><br>${session.nama} (Sesi ${session.sesi})`;
+      renderHistory();
+  }
+
+  // ID Formatting: XXX00-00-000
   function applyMask(input) {
     let value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     let formatted = "";
-
     for (let i = 0; i < value.length; i++) {
       if (i === 5 || i === 7) formatted += "-";
       formatted += value[i];
@@ -34,12 +100,17 @@
   function addManualId() {
     const input = document.getElementById('manualId');
     const val = input.value.trim();
-    // Validate length (3 chars + dash + 2 chars + dash + 3 chars = 12)
-    if (val.length < 12) return alert("Format ID tidak lengkap! (Contoh: ICS24-02-072)");
-    
+    if (val.length < 12) return alert("Format ID tidak lengkap!");
     addToQueue(val);
     input.value = "";
     input.focus();
+  }
+
+  function startScanner() {
+    document.getElementById('reader').style.display = 'block';
+    document.getElementById('startBtn').style.display = 'none';
+    scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+    scanner.render((text) => addToQueue(text));
   }
 
   function addToQueue(id) {
@@ -71,23 +142,21 @@
   async function saveBatch() {
     const cat = document.getElementById('category').value;
     if (!cat) return alert("Sila pilih jenis kesalahan!");
-    if (scannedIds.size === 0) return alert("Sila imbas QR atau taip ID!");
+    if (scannedIds.size === 0) return alert("Sila masukkan ID pelajar!");
 
     if (!session.kelasList[kelasIdx].batches) session.kelasList[kelasIdx].batches = [];
     
     const currentBatches = session.kelasList[kelasIdx].batches;
     const newStudents = Array.from(scannedIds);
 
-    // SMART CHECK: Does this category already exist in this session?
+    // SMART MERGING LOGIC
     const existingBatch = currentBatches.find(b => b.category === cat);
 
     if (existingBatch) {
-      // Merge students and remove duplicates using Set
       const mergedSet = new Set([...existingBatch.students, ...newStudents]);
       existingBatch.students = Array.from(mergedSet);
-      existingBatch.time = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }); // Update time to latest
+      existingBatch.time = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
     } else {
-      // Add as new batch
       currentBatches.push({
         category: cat,
         students: newStudents,
@@ -96,8 +165,7 @@
     }
 
     localStorage.setItem('currentSpotcheckSession', JSON.stringify(session));
-    
-    alert(`Data dikemaskini untuk: ${cat}`);
+    alert(`Rekod dikemaskini: ${cat}`);
     
     scannedIds.clear();
     renderQueue();
@@ -119,13 +187,6 @@
       </div>
     `).reverse().join('');
   }
-
-  function startScanner() {
-    document.getElementById('reader').style.display = 'block';
-    document.getElementById('startBtn').style.display = 'none';
-    scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-    scanner.render((text) => addToQueue(text));
-  }
-
-  renderHistory();
 </script>
+</body>
+</html>
