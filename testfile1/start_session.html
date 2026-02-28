@@ -79,34 +79,23 @@
 </div>
 
 <script>
+  
   document.getElementById('startForm').addEventListener('submit', function(e) {
-    e.preventDefault(); // Stop normal form submit
-
-    // Only check existing session when user tries to submit
-    if (localStorage.getItem('currentSpotcheckSession')) {
-      if (!confirm("Ada sesi aktif. Teruskan akan timpa sesi lama. Terus?")) {
-        window.location.href = 'dashboard.html';
-        return; // Stop here — don't create new session
-      }
-    }
-
-    // If we reach here → either no old session, or user clicked OK
+    e.preventDefault();
+    
     const data = {
-      semester: document.getElementById('semester').value,
-      tahun: document.getElementById('tahun').value,
-      nama: document.getElementById('nama_sesi').value.trim() || 'Sesi Tanpa Nama',
-      started: new Date().toLocaleString('ms-MY'),
-      kelasList: [],
-      status: 'draft'
+        semester: document.getElementById('semester').value,
+        tahun: document.getElementById('tahun').value,
+        nama: document.getElementById('nama_sesi').value.trim(),
+        started: new Date().toLocaleString('ms-MY'),
+        kelasList: [],
+        status: 'draft'
     };
 
     localStorage.setItem('currentSpotcheckSession', JSON.stringify(data));
-
-    // Optional: debug alert to confirm
-    // alert("Sesi baru dicipta! Redirect ke dashboard...");
-
     window.location.href = 'dashboard.html';
-  });
+});
+ 
 </script>
 
 </body>
