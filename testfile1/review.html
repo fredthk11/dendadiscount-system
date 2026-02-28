@@ -14,6 +14,14 @@
     .report-table th { background-color: #1a3c6d; color: white; }
     .class-header { background-color: #e9f1ff; font-weight: bold; color: #1a3c6d; }
     .footer-btns { margin-top: 30px; display: flex; gap: 10px; }
+    
+    /* Print optimizations */
+    @media print {
+      .footer-btns { display: none; }
+      body { background: white; margin: 0; }
+      .container { box-shadow: none; max-width: 100%; }
+    }
+
     button { flex: 1; padding: 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
     .btn-back { background: #6c757d; color: white; }
     .btn-print { background: #28a745; color: white; }
@@ -33,8 +41,7 @@
         <th>Bilangan</th>
       </tr>
     </thead>
-    <tbody id="reportContent">
-      </tbody>
+    <tbody id="reportContent"></tbody>
   </table>
 
   <div class="footer-btns">
@@ -44,7 +51,6 @@
 </div>
 
 <script>
-  <script>
   function generateReport() {
     const session = JSON.parse(localStorage.getItem('currentSpotcheckSession'));
     const content = document.getElementById('reportContent');
@@ -55,19 +61,19 @@
       return;
     }
 
-    // Set Meta Header - UPDATED to use session.sesi
+    // Set Meta Header
     meta.innerHTML = `
       <b>Nama Sesi:</b> ${session.nama} <br>
-      <b>Sesi:</b> ${session.sesi} | <b>Tahun:</b> ${session.tahun} <br>
+      <b>Sesi:</b> ${session.sesi || 'N/A'} | <b>Tahun:</b> ${session.tahun} <br>
       <b>Tarikh Mula:</b> ${session.started}
     `;
 
-    let totalAll = 0;
+    let totalKesalahan = 0;
+    let allStudentsUnique = new Set();
     content.innerHTML = '';
 
-    // Logic for classes and batches remains the same
     (session.kelasList || []).forEach(kelas => {
-      // Add Class Row
+      // Add Class Row Header
       const rowKelas = document.createElement('tr');
       rowKelas.className = 'class-header';
       rowKelas.innerHTML = `<td colspan="3">UNIT: ${kelas.code}</td>`;
@@ -87,22 +93,28 @@
             <td>${batch.students.length}</td>
           `;
           content.appendChild(row);
-          totalAll += batch.students.length;
+          
+          totalKesalahan += batch.students.length;
+          batch.students.forEach(id => allStudentsUnique.add(id));
         });
       }
     });
 
-    // Final Total Row
-    const totalRow = document.createElement('tr');
-    totalRow.style.fontWeight = 'bold';
-    totalRow.style.background = '#fdf2f2';
-    totalRow.innerHTML = `<td colspan="2" style="text-align:right">JUMLAH KESELURUHAN PELAJAR:</td><td>${totalAll}</td>`;
-    content.appendChild(totalRow);
+    // Final Total Summary Rows
+    const totalRow1 = document.createElement('tr');
+    totalRow1.style.fontWeight = 'bold';
+    totalRow1.innerHTML = `<td colspan="2" style="text-align:right">JUMLAH KESELURUHAN KESALAHAN:</td><td>${totalKesalahan}</td>`;
+    content.appendChild(totalRow1);
+
+    const totalRow2 = document.createElement('tr');
+    totalRow2.style.fontWeight = 'bold';
+    totalRow2.style.background = '#fdf2f2';
+    totalRow2.innerHTML = `<td colspan="2" style="text-align:right">JUMLAH PELAJAR UNIK TERLIBAT:</td><td>${allStudentsUnique.size}</td>`;
+    content.appendChild(totalRow2);
   }
 
   // Run on load
   generateReport();
-</script>
 </script>
 
 </body>
