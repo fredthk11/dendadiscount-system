@@ -77,90 +77,80 @@
 </div>
 
 <script>
+  // GLOBAL STORAGE HANDLERS
+function getSession() {
+    return JSON.parse(localStorage.getItem('currentSpotcheckSession')) || null;
+}
+function saveSession(data) {
+    localStorage.setItem('currentSpotcheckSession', JSON.stringify(data));
+}
 
-  let session = JSON.parse(localStorage.getItem('currentSpotcheckSession')) || null;
-
-  function renderDashboard() {
-    session = JSON.parse(localStorage.getItem('currentSpotcheckSession')) || null;
-  
-    if (!session) {
-      document.getElementById('sessionInfo').innerHTML = 
-        'Tiada sesi aktif. <a href="start_session.html">Mula sesi baru</a>';
-      document.getElementById('kelasContainer').innerHTML = '';
-      return;
-    }
-  
-    document.getElementById('sessionInfo').innerHTML = `
-      <strong>${session.nama}</strong><br>
-      Semester ${session.semester} • ${session.tahun}<br>
-      Dimulakan: ${session.started}<br>
-      Status: ${session.status.toUpperCase()}
-    `;
-  
+function renderDashboard() {
+    const session = getSession();
+    const infoEl = document.getElementById('sessionInfo');
     const container = document.getElementById('kelasContainer');
+
+    if (!session) {
+        infoEl.innerHTML = 'Tiada sesi aktif. <button class="btn-primary" onclick="window.location.href=\'start_session.html\'">Mula Sesi Baru</button>';
+        container.innerHTML = '';
+        return;
+    }
+
+    infoEl.innerHTML = `
+        <strong>${session.nama}</strong><br>
+        Semester ${session.semester} | ${session.tahun}<br>
+        Dimulakan: ${session.started}<br>
+        Status: <span style="color:blue">${session.status.toUpperCase()}</span>
+    `;
+
     container.innerHTML = '';
-  
     (session.kelasList || []).forEach((kelas, index) => {
-      const div = document.createElement('div');
-      div.className = 'kelas-item';
-      div.innerHTML = `
-        <div>
-          <strong>${kelas.code}</strong><br>
-          ${kelas.batches ? kelas.batches.length : 0} kategori kesalahan
-        </div>
-        <button onclick="goToScan(${index})">Imbas →</button>
-      `;
-      container.appendChild(div);
+        const div = document.createElement('div');
+        div.className = 'kelas-item';
+        // Calculate total students in this class across all batches
+        const totalInKelas = (kelas.batches || []).reduce((sum, b) => sum + b.students.length, 0);
+        
+        div.innerHTML = `
+            <div>
+                <strong>${kelas.code}</strong><br>
+                <small>${totalInKelas} Pelajar Dikesan</small>
+            </div>
+            <button class="btn-primary" onclick="goToScan(${index})">Imbas QR</button>
+        `;
+        container.appendChild(div);
     });
-  }
+}
 
-  function addKelas() {
-
+function addKelas() {
+    const session = getSession();
+    if (!session) return alert("Sila mula sesi terlebih dahulu!");
+    
     const code = prompt("Masukkan kod kelas (contoh: DCS 5D):");
-
     if (!code || !code.trim()) return;
 
-    if (!session) return alert("Sila mula sesi terlebih dahulu.");
-
-    if (!session.kelasList) session.kelasList = [];
-
-    session.kelasList.push({
-
-      code: code.trim(),
-
-      batches: []
-
-    });
-
-    localStorage.setItem('currentSpotcheckSession', JSON.stringify(session));
-
+    session.kelasList.push({ code: code.trim(), batches: [] });
+    saveSession(session);
     renderDashboard();
+}
 
-  }
-
-  function goToScan(kelasIndex) {
-
-    localStorage.setItem('currentKelasIndex', kelasIndex);
-
+function goToScan(index) {
+    localStorage.setItem('currentKelasIndex', index);
     window.location.href = 'scan.html';
+}
 
-  }
+function goToReview() { window.location.href = 'review.html'; }
 
-  function goToReview() {
-
-    window.location.href = 'review.html';
-
-  }
-
-  renderDashboard();
-
-  function resetSession() {
-    if (confirm("Ini akan hapus SEMUA data sesi semasa. Terus?")) {
-      localStorage.removeItem('currentSpotcheckSession');
-      localStorage.removeItem('currentKelasIndex');
-      location.reload();
+function resetSession() {
+    if (confirm("Hapus semua data?")) {
+        localStorage.clear();
+        location.reload();
     }
-  }
+}
+
+// Auto-run on load
+renderDashboard();
+
+  
 
 </script>
 
