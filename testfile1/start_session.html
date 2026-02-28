@@ -40,17 +40,17 @@
 
   <form id="startForm">
 
-    <label>Semester:</label>
+    <label>Sesi:</label>
 
-    <select id="semester" required>
+    <select id="sesi" required>
 
       <option value="">-- Pilih --</option>
 
-      <option value="1">Semester 1</option>
+      <option value="1">Sesi 1</option>
 
-      <option value="2">Semester 2</option>
+      <option value="2">Sesi 2</option>
 
-      <option value="3">Semester 3</option>
+      <option value="3">Sesi 3</option>
 
     </select>
 
@@ -84,7 +84,7 @@
     e.preventDefault();
     
     const data = {
-        semester: document.getElementById('semester').value,
+        sesi: document.getElementById('semester').value,
         tahun: document.getElementById('tahun').value,
         nama: document.getElementById('nama_sesi').value.trim(),
         started: new Date().toLocaleString('ms-MY'),
