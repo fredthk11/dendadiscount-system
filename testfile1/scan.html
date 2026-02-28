@@ -131,14 +131,15 @@
   const retryBtn = document.getElementById('retryBtn');
   const headerEl = document.getElementById('header');
 
-  // Load session  // Load session
+  // Load session
   let session = JSON.parse(localStorage.getItem('currentSpotcheckSession')) || null;
   const kelasIndex = localStorage.getItem('currentKelasIndex');
 
+  // Session check with Demo Mode fallback
   if (!session || kelasIndex === null || !session.kelasList?.[kelasIndex]) {
     headerEl.innerHTML = 'Demo Mode: Tiada sesi/kelas dipilih<br><small style="color:#666;">(data tidak akan disimpan ke sesi)</small>';
-    // Do NOT return → allow scanning for demo
-    // Disable save button
+    
+    // Disable save button in demo mode
     const saveBtn = document.querySelector('button[onclick="addToSession()"]');
     if (saveBtn) {
       saveBtn.disabled = true;
@@ -150,7 +151,10 @@
     headerEl.innerHTML = `Sesi: ${session.nama || 'Spotcheck'}<br>Kelas: ${currentKelas.code || '?'}`;
   }
 
+  // Attach start button
   document.getElementById('startBtn').onclick = startScanner;
+
+  // Initial status message
   updateStatus("Sila tekan 'Mulakan Imbas QR' untuk mulakan pengimbasan", 'ready');
 
   function updateStatus(text, type = 'loading') {
@@ -236,10 +240,15 @@
 
   function addToSession() {
     if (scanned.size === 0) return alert("Tiada pelajar lagi.");
+
     const cat = document.getElementById('category').value;
     if (!cat) return alert("Sila pilih jenis kesalahan terlebih dahulu.");
 
-    if (!currentKelas.batches) currentKelas.batches = [];
+    // This line only runs if session exists (normal mode)
+    if (!currentKelas.batches) {
+      currentKelas.batches = [];
+    }
+
     currentKelas.batches.push({
       category: cat,
       students: Array.from(scanned),
@@ -255,7 +264,7 @@
     updateStatus("Sedia untuk batch seterusnya", 'ready');
   }
 
-  // Cleanup on leave
+  // Cleanup when leaving the page
   window.addEventListener('beforeunload', () => {
     if (scanner) scanner.clear().catch(() => {});
   });
