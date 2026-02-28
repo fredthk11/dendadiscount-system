@@ -29,7 +29,7 @@
 
     <label>Tahun Akademik:</label>
     <select id="tahun" required>
-      <option value="">-- Memuatkan Tahun... --</option>
+      <option value="">-- Pilih Tahun --</option>
     </select>
 
     <label>Nama / Kod Sesi (contoh: Rondaan Week 8):</label>
@@ -39,33 +39,30 @@
 </div>
 
 <script>
-  // 1. DYNAMIC YEAR LOGIC
+  // Dynamic Year Generator
   function initializeYears() {
     const tahunSelect = document.getElementById('tahun');
-    const currentYear = new Date().getFullYear(); // e.g., 2026
+    // Get real-time year from the device (e.g., 2026)
+    const currentYear = new Date().getFullYear(); 
     
-    // Calculate the 3-year range
-    const years = [currentYear - 1, currentYear, currentYear + 1];
+    // Logic: [Previous, Current, Next]
+    const baseYears = [currentYear - 1, currentYear, currentYear + 1];
     
-    // Clear the "Loading" option
-    tahunSelect.innerHTML = '<option value="">-- Pilih Tahun --</option>';
+    // Clear and set the default "empty" value
+    tahunSelect.innerHTML = '<option value="" selected disabled>-- Pilih Tahun --</option>';
     
-    // Generate options in format XXXX/YYYY
-    years.forEach(y => {
-      const optionText = `${y}/${y + 1}`;
+    baseYears.forEach(y => {
+      const academicRange = `${y}/${y + 1}`;
       const option = document.createElement('option');
-      option.value = optionText;
-      option.textContent = optionText;
-      
-      // We don't auto-select, but we can make it easier to find current year
+      option.value = academicRange;
+      option.textContent = academicRange;
       tahunSelect.appendChild(option);
     });
   }
 
-  // Run the year generator immediately
+  // Initialize on page load
   initializeYears();
 
-  // 2. FORM SUBMISSION LOGIC
   document.getElementById('startForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
@@ -73,6 +70,7 @@
     const tahunValue = document.getElementById('tahun').value;
     const namaValue = document.getElementById('nama_sesi').value.trim();
 
+    // The data object that will be passed through the whole system
     const data = {
         sesi: sesiValue,
         tahun: tahunValue,
