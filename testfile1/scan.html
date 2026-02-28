@@ -10,14 +10,20 @@
     .header { background: #1a3c6d; color: white; padding: 14px; text-align: center; border-radius: 10px; margin-bottom: 16px; }
     .status { font-weight: bold; padding: 10px; margin: 8px 0; border-radius: 6px; text-align: center; }
     .status.ready { background: #d4edda; color: #155724; }
-    .status.error { background: #f8d7da; color: #721c24; }
     label { display: block; margin: 12px 0 6px; font-weight: bold; }
     select, button { width: 100%; padding: 12px; margin: 8px 0 16px; border-radius: 8px; font-size: 16px; border: 1px solid #ccc; box-sizing: border-box; }
     #reader { width: 100%; max-width: 380px; margin: 0 auto 20px; border: 3px solid #007bff; border-radius: 12px; overflow: hidden; background: #000; display: none; }
-    .queue { background: white; padding: 16px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    
+    .queue, .history { background: white; padding: 16px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
     .student-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
     .remove { color: #dc3545; font-weight: bold; cursor: pointer; border: 1px solid #dc3545; padding: 2px 8px; border-radius: 4px; }
+    
+    .history h3 { color: #1a3c6d; border-bottom: 2px solid #1a3c6d; padding-bottom: 5px; }
+    .history-item { font-size: 0.9em; padding: 8px 0; border-bottom: 1px dashed #ccc; }
+    .history-item b { color: #d32f2f; }
+
     .btn-primary { background: #007bff; color: white; border: none; font-weight: bold; }
+    .btn-save { background: #28a745; color: white; border: none; font-weight: bold; }
     .btn-secondary { background: #6c757d; color: white; border: none; }
   </style>
 </head>
@@ -25,7 +31,7 @@
 
 <div class="header" id="header">Memuat Sesi...</div>
 
-<div id="status" class="status ready">Sila pilih kesalahan dan mula imbas</div>
+<div id="status" class="status ready">Sedia untuk mengimbas</div>
 
 <label>Jenis Kesalahan:</label>
 <select id="category">
@@ -42,8 +48,13 @@
 <div class="queue">
   <h3>Senarai Menunggu (<span id="count">0</span>)</h3>
   <div id="queueList"></div>
-  <button class="btn-primary" style="background:#28a745" onclick="saveToGlobal()">Simpan Semua ke Sesi</button>
-  <button class="btn-secondary" onclick="window.location.href='dashboard.html'">Batal & Kembali</button>
+  <button class="btn-save" onclick="saveBatch()">Simpan Batch Ini</button>
+</div>
+
+<div class="history">
+  <h3>Sejarah Imbasan (Kelas Ini)</h3>
+  <div id="historyList">Tiada rekod disimpan lagi.</div>
+  <button class="btn-secondary" onclick="window.location.href='dashboard.html'" style="margin-top:15px;">Selesai & Kembali ke Dashboard</button>
 </div>
 
 <script>
@@ -54,11 +65,12 @@
   let session = JSON.parse(localStorage.getItem('currentSpotcheckSession'));
   const kelasIdx = localStorage.getItem('currentKelasIndex');
   
-  if (!session || kelasIdx === null) {
+  if (!session || kelasIdx === null || !session.kelasList[kelasIdx]) {
       alert("Ralat: Sesi atau Kelas tidak dikesan!");
       window.location.href = 'dashboard.html';
   } else {
-      document.getElementById('header').innerHTML = `<b>Kelas: ${session.kelasList[kelasIdx].code}</b><br>${session.nama}`;
+      document.getElementById('header').innerHTML = `<b>Unit: ${session.kelasList[kelasIdx].code}</b><br>${session.nama}`;
+      renderHistory(); // Show existing batches if any
   }
 
   function startScanner() {
@@ -67,8 +79,9 @@
     
     scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
     scanner.render((text) => {
-      if (!scannedIds.has(text)) {
-        scannedIds.add(text);
+      const cleanId = text.trim();
+      if (!scannedIds.has(cleanId)) {
+        scannedIds.add(cleanId);
         renderQueue();
         if (navigator.vibrate) navigator.vibrate(100);
       }
@@ -92,22 +105,48 @@
     renderQueue();
   }
 
-  function saveToGlobal() {
+  function renderHistory() {
+    const historyList = document.getElementById('historyList');
+    const batches = session.kelasList[kelasIdx].batches || [];
+    
+    if (batches.length === 0) {
+      historyList.innerHTML = "Tiada rekod disimpan lagi.";
+      return;
+    }
+
+    historyList.innerHTML = batches.map((b, i) => `
+      <div class="history-item">
+        <b>[${b.time}] ${b.category}</b>: ${b.students.length} pelajar
+        <br><small>${b.students.join(', ')}</small>
+      </div>
+    `).reverse().join(''); // Show latest on top
+  }
+
+  async function saveBatch() {
     const cat = document.getElementById('category').value;
     if (!cat) return alert("Sila pilih jenis kesalahan!");
     if (scannedIds.size === 0) return alert("Tiada pelajar diimbas!");
 
-    // DATA PUSH TO GLOBAL OBJECT
+    // 1. Update the Local Object
+    if (!session.kelasList[kelasIdx].batches) session.kelasList[kelasIdx].batches = [];
+    
     session.kelasList[kelasIdx].batches.push({
       category: cat,
       students: Array.from(scannedIds),
-      time: new Date().toLocaleTimeString()
+      time: new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })
     });
 
-    // GLOBAL STORAGE POST
+    // 2. Save to LocalStorage
     localStorage.setItem('currentSpotcheckSession', JSON.stringify(session));
-    alert("Berjaya disimpan ke Dashboard!");
-    window.location.href = 'dashboard.html';
+
+    // 3. UI Update (Visual feedback)
+    alert(`Berjaya simpan ${scannedIds.size} pelajar untuk ${cat}`);
+    
+    // 4. Reset for next batch
+    scannedIds.clear();
+    renderQueue();
+    document.getElementById('category').value = ""; // Clear selection
+    renderHistory(); // Refresh the history list below
   }
 </script>
 </body>
