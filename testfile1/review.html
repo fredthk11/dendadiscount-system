@@ -3,160 +3,103 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Semakan Akhir Sesi Spotcheck</title>
+  <title>Laporan Akhir Spotcheck</title>
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      margin: 15px; 
-      background: #f0f2f5; 
-    }
-    .container { 
-      max-width: 600px; 
-      margin: auto; 
-      background: white; 
-      padding: 20px; 
-      border-radius: 12px; 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
-    }
-    h1 { 
-      text-align: center; 
-      color: #d32f2f; 
-    }
-    .section { 
-      margin: 20px 0; 
-      padding: 15px; 
-      background: #fff8e1; 
-      border-radius: 8px; 
-    }
-    table { 
-      width: 100%; 
-      border-collapse: collapse; 
-      margin: 15px 0; 
-    }
-    th, td { 
-      padding: 10px; 
-      border: 1px solid #ddd; 
-      text-align: left; 
-    }
-    th { 
-      background: #1a3c6d; 
-      color: white; 
-    }
-    .btn { 
-      display: block; 
-      width: 100%; 
-      padding: 15px; 
-      margin: 10px 0; 
-      font-size: 18px; 
-      border: none; 
-      border-radius: 8px; 
-      cursor: pointer; 
-    }
-    .finalize { 
-      background: #d32f2f; 
-      color: white; 
-    }
-    .back { 
-      background: #6c757d; 
-      color: white; 
-    }
-    .reset-dev { 
-      background: #ffc107; 
-      color: #212529; 
-      font-weight: bold; 
-      border: 2px solid #ff9800; 
-      margin-top: 30px; 
-    }
-    .reset-dev:hover { 
-      background: #ff9800; 
-      color: white; 
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f0f2f5; }
+    .container { max-width: 700px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #d32f2f; margin-bottom: 5px; }
+    .meta-info { text-align: center; color: #555; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+    .report-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .report-table th, .report-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    .report-table th { background-color: #1a3c6d; color: white; }
+    .class-header { background-color: #e9f1ff; font-weight: bold; color: #1a3c6d; }
+    .footer-btns { margin-top: 30px; display: flex; gap: 10px; }
+    button { flex: 1; padding: 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+    .btn-back { background: #6c757d; color: white; }
+    .btn-print { background: #28a745; color: white; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>Semakan Akhir Sesi</h1>
+  <h1>Laporan Sesi Spotcheck</h1>
+  <div id="metaInfo" class="meta-info"></div>
 
-  <div id="summary"></div>
+  <table class="report-table" id="reportTable">
+    <thead>
+      <tr>
+        <th>Kelas / Kategori</th>
+        <th>Pelajar Terlibat</th>
+        <th>Bilangan</th>
+      </tr>
+    </thead>
+    <tbody id="reportContent">
+      </tbody>
+  </table>
 
-  <button class="btn back" onclick="window.location.href='dashboard.html'">Kembali Edit</button>
-  <button class="btn finalize" onclick="finalizeSession()">Finalkan Sesi & Simpan</button>
-
-  <!-- Reset button for dev testing -->
-  <button class="btn reset-dev" onclick="resetDevTest()">Reset (Dev Test) - Kosongkan Semua Data</button>
+  <div class="footer-btns">
+    <button class="btn-back" onclick="window.location.href='dashboard.html'">Kembali ke Dashboard</button>
+    <button class="btn-print" onclick="window.print()">Cetak Laporan (PDF)</button>
+  </div>
 </div>
 
 <script>
-    const session = JSON.parse(localStorage.getItem('currentSpotcheckSession')) || null;
-
-      if (!session) {
-        document.getElementById('summary').innerHTML = 
-          '<p style="color:red; text-align:center; font-size:1.2em;">Tiada sesi ditemui.<br><a href="start_session.html">Mula sesi baru</a></p>';
-        return;
-      }
-
-  function renderSummary() {
-    const summaryEl = document.getElementById('summary');
+  function generateReport() {
+    const session = JSON.parse(localStorage.getItem('currentSpotcheckSession'));
+    const content = document.getElementById('reportContent');
+    const meta = document.getElementById('metaInfo');
 
     if (!session) {
-      summaryEl.innerHTML = '<p>Tiada sesi ditemui. Sila mula sesi baru dari halaman mula.</p>';
+      content.innerHTML = "<tr><td colspan='3' style='text-align:center'>Tiada data sesi ditemui.</td></tr>";
       return;
     }
 
-    let totalStudents = 0;
-    let html = `
-      <div class="section">
-        <strong>Sesi:</strong> ${session.nama || 'Tiada nama'}<br>
-        <strong>Semester:</strong> ${session.semester} • ${session.tahun}<br>
-        <strong>Status:</strong> ${session.status.toUpperCase()}<br>
-        <strong>Mula pada:</strong> ${session.started || 'Tidak direkod'}
-      </div>
+    // Set Meta Header
+    meta.innerHTML = `
+      <b>Sesi:</b> ${session.nama} <br>
+      <b>Semester:</b> ${session.semester} | <b>Tahun:</b> ${session.tahun} <br>
+      <b>Tarikh Mula:</b> ${session.started}
     `;
 
-    (session.kelasList || []).forEach(kelas => {
-      let batchCount = 0;
-      let studentCount = 0;
-      (kelas.batches || []).forEach(b => {
-        batchCount++;
-        studentCount += b.students.length;
-        totalStudents += b.students.length;
-      });
+    let totalAll = 0;
+    content.innerHTML = '';
 
-      html += `
-        <div class="section">
-          <strong>Kelas:</strong> ${kelas.code || 'Tidak ditetapkan'}<br>
-          <strong>Bilangan Kategori:</strong> ${batchCount}<br>
-          <strong>Jumlah Pelajar:</strong> ${studentCount}
-        </div>
-      `;
+    session.kelasList.forEach(kelas => {
+      // Add Class Row
+      const rowKelas = document.createElement('tr');
+      rowKelas.className = 'class-header';
+      rowKelas.innerHTML = `<td colspan="3">UNIT: ${kelas.code}</td>`;
+      content.appendChild(rowKelas);
+
+      if (kelas.batches.length === 0) {
+        const emptyRow = document.createElement('tr');
+        emptyRow.innerHTML = `<td colspan="3" style="color:gray; text-align:center">Tiada kesalahan direkodkan</td>`;
+        content.appendChild(emptyRow);
+      }
+
+      // Add Batch Rows
+      kelas.batches.forEach(batch => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${batch.category}</td>
+          <td><small>${batch.students.join(', ')}</small></td>
+          <td>${batch.students.length}</td>
+        `;
+        content.appendChild(row);
+        totalAll += batch.students.length;
+      });
     });
 
-    html += `<h3 style="text-align:center; color:#d32f2f;">JUMLAH KESELURUHAN: ${totalStudents} pelajar</h3>`;
-    summaryEl.innerHTML = html;
+    // Final Total Row
+    const totalRow = document.createElement('tr');
+    totalRow.style.fontWeight = 'bold';
+    totalRow.style.background = '#fdf2f2';
+    totalRow.innerHTML = `<td colspan="2" style="text-align:right">JUMLAH KESELURUHAN PELAJAR:</td><td>${totalAll}</td>`;
+    content.appendChild(totalRow);
   }
 
-  function finalizeSession() {
-    if (!session) return alert("Tiada sesi untuk difinalkan.");
-    
-    if (confirm("Anda pasti ingin finalkan sesi ini?\n\nData tidak boleh diubah lagi selepas ini.")) {
-      session.status = 'finalized';
-      localStorage.setItem('currentSpotcheckSession', JSON.stringify(session));
-      alert("Sesi telah difinalkan!\n\n(Simulasi: data disimpan ke pangkalan data sebenar nanti)");
-      renderSummary(); // refresh display
-    }
-  }
-
-  function resetDevTest() {
-    if (confirm("Hapus SEMUA localStorage?")) {
-      localStorage.clear();
-      alert("Semua data dibersihkan!");
-      window.location.reload();
-    }
-  }
-
-  // Render on load
-  renderSummary();
+  // Run on load
+  generateReport();
 </script>
 
 </body>
