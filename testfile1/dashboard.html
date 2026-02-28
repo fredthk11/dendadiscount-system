@@ -39,7 +39,6 @@
 </div>
 
 <script>
-// GLOBAL STORAGE HANDLERS
 function getSession() {
     return JSON.parse(localStorage.getItem('currentSpotcheckSession')) || null;
 }
@@ -59,7 +58,6 @@ function renderDashboard() {
         return;
     }
 
-    // Displays Sesi and Tahun correctly
     infoEl.innerHTML = `
         <strong>${session.nama}</strong><br>
         Sesi ${session.sesi || 'N/A'} | ${session.tahun}<br>
@@ -72,13 +70,17 @@ function renderDashboard() {
         const div = document.createElement('div');
         div.className = 'kelas-item';
         
-        // Safe check for batches and student counting
-        const totalInKelas = (kelas.batches || []).reduce((sum, b) => sum + (b.students ? b.students.length : 0), 0);
+        // Logic for unique student vs total infractions
+        const totalKesalahan = (kelas.batches || []).reduce((sum, b) => sum + (b.students ? b.students.length : 0), 0);
+        const uniqueIds = new Set();
+        (kelas.batches || []).forEach(batch => {
+            if (batch.students) batch.students.forEach(id => uniqueIds.add(id));
+        });
         
         div.innerHTML = `
             <div>
                 <strong>${kelas.code}</strong><br>
-                <small>${totalInKelas} Pelajar Dikesan</small>
+                <small>${totalKesalahan} Kesalahan | ${uniqueIds.size} Pelajar</small>
             </div>
             <button class="btn-primary" onclick="goToScan(${index})">Imbas QR</button>
         `;
@@ -115,7 +117,6 @@ function resetSession() {
     }
 }
 
-// Auto-run on load
 renderDashboard();
 </script>
 
