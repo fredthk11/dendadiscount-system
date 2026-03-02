@@ -8,19 +8,11 @@
   <style>
     body { font-family: Arial, sans-serif; margin: 12px; background: #f0f2f5; color: #333; }
     .header { background: #1a3c6d; color: white; padding: 14px; text-align: center; border-radius: 10px; margin-bottom: 16px; }
-    
     .section { background: white; padding: 16px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
     
     #statusMessage { 
-        background: #d1ecf1; 
-        color: #0c5460; 
-        padding: 10px; 
-        border-radius: 8px; 
-        text-align: center; 
-        margin-bottom: 10px; 
-        font-weight: bold;
-        display: none; 
-        border: 1px solid #bee5eb;
+        background: #d1ecf1; color: #0c5460; padding: 10px; border-radius: 8px; text-align: center; 
+        margin-bottom: 10px; font-weight: bold; display: none; border: 1px solid #bee5eb;
     }
 
     label { display: block; margin: 12px 0 4px; font-weight: bold; }
@@ -32,7 +24,6 @@
     .manual-row input { margin: 0; flex-grow: 1; border: 2px solid #6f42c1; text-transform: uppercase; }
     .btn-add-manual { background: #6f42c1; color: white; border: none; width: auto; margin: 0; padding: 0 20px; font-weight: bold; }
 
-    /* Description Box Styling */
     #descBox { font-size: 0.85em; color: #444; background: #f8f9fa; padding: 12px; border-radius: 8px; display: none; margin-bottom: 10px; border-left: 5px solid #1a3c6d; line-height: 1.4; }
 
     .student-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
@@ -70,14 +61,14 @@
   <select id="category" onchange="updateDescription()">
     <option value="">-- Pilih Kesalahan --</option>
     <option value="Tiada ID Pelajar">1. Tiada ID Pelajar</option>
-    <option value="Etika Pakaian">2. Etika Pakaian (Ketat/Provokatif)</option>
-    <option value="Aksesori Dilarang">3. Aksesori Berlebihan</option>
-    <option value="Masalah Seluar Jeans">4. Jeans Koyak/Lusuh</option>
-    <option value="Pakaian Tidak Kemas">5. Pakaian Koyak/Lusuh</option>
-    <option value="Penutup Kepala">6. Topi/Hoodie/Headcover</option>
-    <option value="Masalah Rambut">7. Rambut/Warna Rambut</option>
-    <option value="Tatu/Lukisan">8. Tatu/Lukisan Badan</option>
-    <option value="Etika Kasut">9. Kasut Tidak Sesuai</option>
+    <option value="Pakaian (Ketat/Provokatif)">2. Pakaian (Ketat/Provokatif)</option>
+    <option value="Aksesori Dilarang/Berlebihan">3. Aksesori Dilarang/Berlebihan</option>
+    <option value="Jeans Koyak/Lusuh">4. Jeans Koyak/Lusuh</option>
+    <option value="Pakaian Tidak Kemas">5. Pakaian Tidak Kemas</option>
+    <option value="Topi/Hoodie/Headcover">6. Topi/Hoodie/Headcover</option>
+    <option value="Masalah Rambut">7. Masalah Rambut</option>
+    <option value="Tatu/Lukisan Badan">8. Tatu/Lukisan Badan</option>
+    <option value="Etika Kasut">9. Etika Kasut</option>
   </select>
 
   <div id="descBox">
@@ -101,14 +92,14 @@
   
   const descriptions = {
     "Tiada ID Pelajar": "Tidak memakai ID Pelajar.",
-    "Etika Pakaian": "Memakai pakaian (baju atau seluar/kain) terlalu ketat, terlalu longgar/besar, terlalu pendek, atau bercetak provokatif.",
-    "Aksesori Dilarang": "Memakai aksesori yang dilarang atau berlebihan.",
-    "Masalah Seluar Jeans": "Memakai seluar jeans koyak, bertampal, atau lusuh.",
+    "Pakaian (Ketat/Provokatif)": "Pakaian (baju atau seluar/kain) terlalu ketat, longgar, pendek, atau bercetak provokatif.",
+    "Aksesori Dilarang/Berlebihan": "Memakai aksesori yang dilarang atau berlebihan.",
+    "Jeans Koyak/Lusuh": "Memakai seluar jeans koyak, bertampal, atau lusuh.",
     "Pakaian Tidak Kemas": "Pakaian koyak atau terlalu lusuh yang menampakkan kurangnya disiplin.",
-    "Penutup Kepala": "Memakai topi, hoodie, atau penutup kepala tanpa kebenaran.",
+    "Topi/Hoodie/Headcover": "Memakai topi, hoodie, atau penutup kepala tanpa kebenaran.",
     "Masalah Rambut": "Rambut Panjang, rambut kusut, tidak disikat, atau warna rambut.",
-    "Tatu/Lukisan": "Tatu sementara atau lukisan badan.",
-    "Etika Kasut": "Memakai kasut yang tidak bertutup, kasut sukan yang terlalu ‘fancy’, kasut bertumit tinggi."
+    "Tatu/Lukisan Badan": "Tatu sementara atau lukisan badan.",
+    "Etika Kasut": "Kasut tidak bertutup, kasut sukan terlalu ‘fancy’, atau kasut bertumit tinggi."
   };
 
   let session = JSON.parse(localStorage.getItem('currentSpotcheckSession'));
@@ -207,14 +198,11 @@
     if (!cat) return alert("Sila pilih jenis kesalahan!");
     if (scannedIds.size === 0) return alert("Sila masukkan ID pelajar!");
 
-    const fullDescription = descriptions[cat];
     if (!session.kelasList[kelasIdx].batches) session.kelasList[kelasIdx].batches = [];
-    
     const currentBatches = session.kelasList[kelasIdx].batches;
     const newStudents = Array.from(scannedIds);
 
-    // Look for existing batch using the Label (Short Name)
-    const existingBatch = currentBatches.find(b => b.categoryLabel === cat);
+    const existingBatch = currentBatches.find(b => b.category === cat);
 
     if (existingBatch) {
       const mergedSet = new Set([...existingBatch.students, ...newStudents]);
@@ -222,8 +210,7 @@
       existingBatch.time = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
     } else {
       currentBatches.push({
-        categoryLabel: cat, // Used for internal matching
-        category: fullDescription, // Used for the Review/Report page
+        category: cat, // The 2-3 word name
         students: newStudents,
         time: new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })
       });
@@ -248,7 +235,7 @@
     }
     historyList.innerHTML = batches.map(b => `
       <div class="history-item">
-        <b>${b.categoryLabel} (${b.time})</b>
+        <b>${b.category} (${b.time})</b>
         <small>${b.students.length} pelajar: ${b.students.join(', ')}</small>
       </div>
     `).reverse().join('');
