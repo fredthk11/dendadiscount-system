@@ -11,7 +11,6 @@
     
     .section { background: white; padding: 16px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
     
-    /* NEW: Status Message Styling */
     #statusMessage { 
         background: #d1ecf1; 
         color: #0c5460; 
@@ -20,7 +19,7 @@
         text-align: center; 
         margin-bottom: 10px; 
         font-weight: bold;
-        display: none; /* Hidden by default */
+        display: none; 
         border: 1px solid #bee5eb;
     }
 
@@ -33,10 +32,14 @@
     .manual-row input { margin: 0; flex-grow: 1; border: 2px solid #6f42c1; text-transform: uppercase; }
     .btn-add-manual { background: #6f42c1; color: white; border: none; width: auto; margin: 0; padding: 0 20px; font-weight: bold; }
 
+    /* Description Box Styling */
+    #descBox { font-size: 0.85em; color: #444; background: #f8f9fa; padding: 12px; border-radius: 8px; display: none; margin-bottom: 10px; border-left: 5px solid #1a3c6d; line-height: 1.4; }
+
     .student-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
     .remove { color: #dc3545; font-weight: bold; cursor: pointer; border: 1px solid #dc3545; padding: 2px 8px; border-radius: 4px; }
-    .history-item { font-size: 0.9em; padding: 8px 0; border-bottom: 1px dashed #ccc; }
-    .history-item b { color: #d32f2f; }
+    
+    .history-item { font-size: 0.9em; padding: 10px 0; border-bottom: 1px dashed #ccc; }
+    .history-item b { color: #d32f2f; display: block; margin-bottom: 2px; }
 
     .btn-primary { background: #007bff; color: white; border: none; font-weight: bold; }
     .btn-save { background: #28a745; color: white; border: none; font-weight: bold; font-size: 18px; margin-top: 15px; }
@@ -49,7 +52,6 @@
 
 <div class="section">
   <div id="statusMessage"></div>
-
   <div id="reader"></div>
   <button id="startBtn" class="btn-primary" onclick="startScanner()">Buka Kamera & Imbas QR</button>
   
@@ -65,13 +67,23 @@
   <div id="queueList"></div>
 
   <label style="margin-top:20px;">Jenis Kesalahan:</label>
-  <select id="category">
+  <select id="category" onchange="updateDescription()">
     <option value="">-- Pilih Kesalahan --</option>
-    <option value="Rambut Panjang">1. Rambut Panjang</option>
-    <option value="Tiada ID Card">2. Tiada ID Card</option>
-    <option value="Selipar">3. Memakai Selipar</option>
-    <option value="Pakaian Tidak Formal">4. Tidak Formal</option>
+    <option value="Tiada ID Pelajar">1. Tiada ID Pelajar</option>
+    <option value="Etika Pakaian">2. Etika Pakaian (Ketat/Provokatif)</option>
+    <option value="Aksesori Dilarang">3. Aksesori Berlebihan</option>
+    <option value="Masalah Seluar Jeans">4. Jeans Koyak/Lusuh</option>
+    <option value="Pakaian Tidak Kemas">5. Pakaian Koyak/Lusuh</option>
+    <option value="Penutup Kepala">6. Topi/Hoodie/Headcover</option>
+    <option value="Masalah Rambut">7. Rambut/Warna Rambut</option>
+    <option value="Tatu/Lukisan">8. Tatu/Lukisan Badan</option>
+    <option value="Etika Kasut">9. Kasut Tidak Sesuai</option>
   </select>
+
+  <div id="descBox">
+    <small style="color: #1a3c6d; font-weight: bold; text-transform: uppercase;">Perincian:</small><br>
+    <span id="descText"></span>
+  </div>
 
   <button class="btn-save" onclick="saveBatch()">Simpan Semua ke Sesi</button>
 </div>
@@ -87,6 +99,18 @@
   let scannedIds = new Set();
   let statusTimeout = null;
   
+  const descriptions = {
+    "Tiada ID Pelajar": "Tidak memakai ID Pelajar.",
+    "Etika Pakaian": "Memakai pakaian (baju atau seluar/kain) terlalu ketat, terlalu longgar/besar, terlalu pendek, atau bercetak provokatif.",
+    "Aksesori Dilarang": "Memakai aksesori yang dilarang atau berlebihan.",
+    "Masalah Seluar Jeans": "Memakai seluar jeans koyak, bertampal, atau lusuh.",
+    "Pakaian Tidak Kemas": "Pakaian koyak atau terlalu lusuh yang menampakkan kurangnya disiplin.",
+    "Penutup Kepala": "Memakai topi, hoodie, atau penutup kepala tanpa kebenaran.",
+    "Masalah Rambut": "Rambut Panjang, rambut kusut, tidak disikat, atau warna rambut.",
+    "Tatu/Lukisan": "Tatu sementara atau lukisan badan.",
+    "Etika Kasut": "Memakai kasut yang tidak bertutup, kasut sukan yang terlalu ‘fancy’, kasut bertumit tinggi."
+  };
+
   let session = JSON.parse(localStorage.getItem('currentSpotcheckSession'));
   const kelasIdx = localStorage.getItem('currentKelasIndex');
   
@@ -96,6 +120,18 @@
   } else {
       document.getElementById('header').innerHTML = `<b>Unit: ${session.kelasList[kelasIdx].code}</b><br>${session.nama} (Sesi ${session.sesi})`;
       renderHistory();
+  }
+
+  function updateDescription() {
+    const cat = document.getElementById('category').value;
+    const box = document.getElementById('descBox');
+    const text = document.getElementById('descText');
+    if (cat && descriptions[cat]) {
+      text.innerText = descriptions[cat];
+      box.style.display = 'block';
+    } else {
+      box.style.display = 'none';
+    }
   }
 
   function applyMask(input) {
@@ -128,35 +164,25 @@
     scanner.render((text) => addToQueue(text));
   }
 
-  // UPDATED: addToQueue now handles the visual status message
   function addToQueue(id) {
     const cleanId = id.trim().toUpperCase();
     const statusEl = document.getElementById('statusMessage');
-
     if (!scannedIds.has(cleanId)) {
       scannedIds.add(cleanId);
       renderQueue();
-      
-      // Show success message
       statusEl.innerText = `✅ ${cleanId} telah ditambah!`;
       statusEl.style.display = 'block';
-      statusEl.style.background = '#d4edda'; // Green success
+      statusEl.style.background = '#d4edda'; 
       statusEl.style.color = '#155724';
-
       if (navigator.vibrate) navigator.vibrate(100);
     } else {
-      // Show "already exists" message
       statusEl.innerText = `⚠️ ${cleanId} sudah ada dalam senarai.`;
       statusEl.style.display = 'block';
-      statusEl.style.background = '#fff3cd'; // Yellow warning
+      statusEl.style.background = '#fff3cd';
       statusEl.style.color = '#856404';
     }
-
-    // Auto-hide message after 3 seconds
     clearTimeout(statusTimeout);
-    statusTimeout = setTimeout(() => {
-        statusEl.style.display = 'none';
-    }, 3000);
+    statusTimeout = setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
   }
 
   function renderQueue() {
@@ -181,12 +207,14 @@
     if (!cat) return alert("Sila pilih jenis kesalahan!");
     if (scannedIds.size === 0) return alert("Sila masukkan ID pelajar!");
 
+    const fullDescription = descriptions[cat];
     if (!session.kelasList[kelasIdx].batches) session.kelasList[kelasIdx].batches = [];
     
     const currentBatches = session.kelasList[kelasIdx].batches;
     const newStudents = Array.from(scannedIds);
 
-    const existingBatch = currentBatches.find(b => b.category === cat);
+    // Look for existing batch using the Label (Short Name)
+    const existingBatch = currentBatches.find(b => b.categoryLabel === cat);
 
     if (existingBatch) {
       const mergedSet = new Set([...existingBatch.students, ...newStudents]);
@@ -194,18 +222,20 @@
       existingBatch.time = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
     } else {
       currentBatches.push({
-        category: cat,
+        categoryLabel: cat, // Used for internal matching
+        category: fullDescription, // Used for the Review/Report page
         students: newStudents,
         time: new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })
       });
     }
 
     localStorage.setItem('currentSpotcheckSession', JSON.stringify(session));
-    alert(`Rekod dikemaskini: ${cat}`);
+    alert(`Rekod disimpan: ${cat}`);
     
     scannedIds.clear();
     renderQueue();
     document.getElementById('category').value = ""; 
+    document.getElementById('descBox').style.display = 'none';
     renderHistory();
   }
 
@@ -218,8 +248,8 @@
     }
     historyList.innerHTML = batches.map(b => `
       <div class="history-item">
-        <b>[${b.time}] ${b.category}</b>: ${b.students.length} pelajar
-        <br><small>${b.students.join(', ')}</small>
+        <b>${b.categoryLabel} (${b.time})</b>
+        <small>${b.students.length} pelajar: ${b.students.join(', ')}</small>
       </div>
     `).reverse().join('');
   }
